@@ -4,15 +4,31 @@ import { useThree } from '@react-three/fiber'
 import { TeleportTarget } from '@react-three/xr'
 import type { ExhibitDef, RoomDef } from '../schema/museum'
 import { palette } from '../design/tokens'
-import { softShadowTexture, sunPatchTexture } from '../design/proceduralTextures'
+import {
+  ceilingTileTexture,
+  glassTexture,
+  softShadowTexture,
+  sunPatchTexture,
+} from '../design/proceduralTextures'
 import { CLASSROOM_LIGHT } from '../design/light'
 import { useKTX2 } from '../media/useKTX2'
 import { usePlayerStore } from '../locomotion/playerStore'
 import { resolveCircle } from '../locomotion/collision'
-import { buildFrameShadows, buildRoomTrim, buildRoomWalls, buildSunPatches } from './WallBuilder'
-import { FLOOR_TILE_METRES, buildCeiling, buildFloor } from './Surfaces'
+import {
+  buildFrameShadows,
+  buildRoomTrim,
+  buildRoomWalls,
+  buildSunPatches,
+  buildWindowGlass,
+} from './WallBuilder'
+import { FLOOR_TILE_METRES, buildCeiling, buildCeilingPanels, buildFloor } from './Surfaces'
+import { floorSheen } from './floorSheen'
+import { roomBlinds } from '../classroom/layout'
 
 const FLOOR_URL = '/textures/floor-interior-tiles-2k.ktx2'
+
+// Glazed ceramic: strength of the grazing-angle reflection added to the floor colour.
+const FLOOR_SHEEN = 0.16
 
 // PLAN §14 Faz 3: no teleport target closer than 0.4 m to a wall; targets are nudged out instead of refused.
 const TELEPORT_WALL_CLEARANCE = 0.4
@@ -38,23 +54,40 @@ export function Room({ room, exhibits }: RoomProps) {
     [room, wallColor, light],
   )
   const trim = useMemo(
-    () => buildRoomTrim(room, palette.onsut, baseboardColor, palette.kapi, palette.metal, light),
+    () =>
+      buildRoomTrim(room, palette.onsut, baseboardColor, palette.kapi, palette.aluminyum, light),
     [room, baseboardColor, light],
   )
   const floor = useMemo(() => buildFloor(room, light, FLOOR_TILE_METRES), [room, light])
-  const ceiling = useMemo(() => buildCeiling(room, palette.tavan, light), [room, light])
-  const sun = useMemo(() => buildSunPatches(room), [room])
+  const ceiling = useMemo(() => buildCeiling(room, light), [room, light])
+  const panels = useMemo(() => buildCeilingPanels(room, palette.onsut, light), [room, light])
+  const sheen = useMemo(() => floorSheen(light.light, FLOOR_SHEEN), [light])
+  const sun = useMemo(() => {
+    const blinds = room.classroom ? roomBlinds(room) : []
+    const covered = room.windows.map((w, i) => {
+      const b = blinds[i]
+      return b ? (b.top - b.bottom) / w.height : 0
+    })
+    return buildSunPatches(room, covered)
+  }, [room])
+  const glass = useMemo(() => buildWindowGlass(room), [room])
   const shadows = useMemo(() => buildFrameShadows(room, exhibits), [room, exhibits])
   useEffect(
     () => () => {
-      for (const g of [walls, trim, floor, ceiling, sun, shadows]) g?.dispose()
+      for (const g of [walls, trim, floor, ceiling, panels, sun, glass, shadows]) g?.dispose()
     },
-    [walls, trim, floor, ceiling, sun, shadows],
+    [walls, trim, floor, ceiling, panels, sun, glass, shadows],
   )
 
   const maxAnisotropy = useThree((s) => s.gl.capabilities.getMaxAnisotropy())
   const floorMap = useKTX2(FLOOR_URL, (t) => configureFloor(t, maxAnisotropy))
   const teleport = usePlayerStore((s) => s.teleport)
+  const ceilingMap = useMemo(() => {
+    const t = ceilingTileTexture()
+    // Ceiling tiles are seen at grazing angles from a seat, like the floor.
+    t.anisotropy = Math.min(8, maxAnisotropy)
+    return t
+  }, [maxAnisotropy])
 
   return (
     <group name={`room:${room.id}`}>
@@ -77,10 +110,18 @@ export function Room({ room, exhibits }: RoomProps) {
         }}
       >
         <mesh geometry={floor}>
-          <meshBasicMaterial map={floorMap} vertexColors />
+          <meshBasicMaterial
+            map={floorMap}
+            vertexColors
+            onBeforeCompile={sheen}
+            customProgramCacheKey={() => 'floor-sheen'}
+          />
         </mesh>
       </TeleportTarget>
       <mesh geometry={ceiling}>
+        <meshBasicMaterial map={ceilingMap} vertexColors />
+      </mesh>
+      <mesh geometry={panels}>
         <meshBasicMaterial vertexColors />
       </mesh>
       {shadows && (
@@ -91,6 +132,18 @@ export function Room({ room, exhibits }: RoomProps) {
             transparent
             opacity={0.42}
             depthWrite={false}
+          />
+        </mesh>
+      )}
+      {glass && (
+        // After the panorama and walls; never writes depth, so exhibits behind stay visible.
+        <mesh geometry={glass} renderOrder={3}>
+          <meshBasicMaterial
+            map={glassTexture()}
+            color={palette.onsut}
+            transparent
+            depthWrite={false}
+            toneMapped={false}
           />
         </mesh>
       )}

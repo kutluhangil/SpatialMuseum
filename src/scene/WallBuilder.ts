@@ -10,6 +10,7 @@ import {
   type WallSideName,
 } from '../schema/museum'
 import type { RoomLight } from '../design/light'
+import { daylight } from './bakedLight'
 import { FRAME_PROFILE, FRAME_SHADOW } from '../exhibits/frameSpec'
 import {
   wallFrame,
@@ -131,6 +132,8 @@ function cuts(a: number, b: number, fixed: number[], step: number): number[] {
 }
 
 function subdividedWall(
+  room: RoomDef,
+  side: WallSideName,
   frame: WallFrame,
   r: WallRect,
   base: Color,
@@ -149,7 +152,10 @@ function subdividedWall(
       const v1 = vs[j + 1] ?? 0
       // Quads never straddle the rail, so the dado tone changes with a crisp edge.
       const tone = v1 <= CHAIR_RAIL.top + 1e-6 ? dado : base
-      const c = (u: number, v: number) => shadeColor(tone, u, v, L, height)
+      const c = (u: number, v: number) => {
+        const [wx, , wz] = wallPoint(frame, u, v)
+        return shadeColor(tone, u, v, L, height).multiplyScalar(daylight(room, wx, wz, side))
+      }
       parts.push(
         quad(
           wallPoint(frame, u0, v0),
@@ -178,7 +184,7 @@ export function buildRoomWalls(
     const dado = litColor(dadoColor, light, SIDE_BRIGHTNESS[side])
     const frame = wallFrame(room, side)
     for (const r of wallSegments(frame.length, room.height, roomOpenings(room, side))) {
-      parts.push(...subdividedWall(frame, r, base, dado, room.height))
+      parts.push(...subdividedWall(room, side, frame, r, base, dado, room.height))
     }
   }
   return merge(parts, `walls of room "${room.id}"`)
@@ -323,6 +329,108 @@ function windowTrim(f: WallFrame, o: Opening, casing: Color): BufferGeometry[] {
   parts.push(
     ...box(f, { u0: o0, u1: o1, v0: tv - bar / 2, v1: tv + bar / 2 }, midD0, midD1, casing),
   )
+  // Tilt-and-turn handle on the upright, at the height you would reach for it.
+  const hv = o.bottom + (o.top - o.bottom) * 0.42
+  const handle = casing.clone().multiplyScalar(0.9)
+  parts.push(
+    ...box(
+      f,
+      { u0: o.offset - 0.014, u1: o.offset + 0.014, v0: hv - 0.02, v1: hv + 0.02 },
+      midD1,
+      midD1 + 0.02,
+      handle,
+    ),
+    ...box(
+      f,
+      { u0: o.offset - 0.01, u1: o.offset + 0.01, v0: hv - 0.13, v1: hv },
+      midD1 + 0.02,
+      midD1 + 0.04,
+      handle,
+    ),
+  )
+  return parts
+}
+
+/**
+ * Glass panes in every window, just outside the glazing bars: a faint tint and soft reflection
+ * streaks (from `glassTexture`) so the opening reads as glazed, not as a hole in the wall.
+ */
+export function buildWindowGlass(room: RoomDef): BufferGeometry | null {
+  const parts: BufferGeometry[] = []
+  const d = -WINDOW.reveal / 2 - WINDOW.bar / 2 - 0.004
+  for (const w of room.windows) {
+    const f = wallFrame(room, w.wall)
+    const u0 = w.offset - w.width / 2
+    const u1 = w.offset + w.width / 2
+    parts.push(
+      withUv(
+        quad(
+          wallPoint(f, u0, w.sill, d),
+          wallPoint(f, u1, w.sill, d),
+          wallPoint(f, u1, w.sill + w.height, d),
+          wallPoint(f, u0, w.sill + w.height, d),
+          f.normal,
+        ),
+      ),
+    )
+  }
+  if (parts.length === 0) return null
+  return merge(parts, `window glass of room "${room.id}"`)
+}
+
+// Room face of a closed door leaf (the leaf spans -0.06..-0.02 inside the reveal).
+const LEAF_FACE = -0.02
+
+/**
+ * Hardware on a closed school door's room face: lever handle on a rosette with a key escutcheon
+ * below, a frosted vision panel on the lock side, stainless kick plate, three hinges on the
+ * hinge edge and an overhead closer. The handle is on the right-hand edge (larger u).
+ */
+function doorHardware(f: WallFrame, d0: number, d1: number, steel: Color, casing: Color) {
+  const leaf = (r: WallRect, depth: number, color: Color) =>
+    box(f, r, LEAF_FACE - 0.002, LEAF_FACE + depth, color)
+  const dark = steel.clone().multiplyScalar(0.35)
+  const parts = [
+    ...leaf({ u0: d1 - 0.095, u1: d1 - 0.045, v0: 1.005, v1: 1.055 }, 0.01, steel),
+    ...box(f, { u0: d1 - 0.08, u1: d1 - 0.06, v0: 1.02, v1: 1.04 }, LEAF_FACE, 0.045, steel),
+    ...box(f, { u0: d1 - 0.2, u1: d1 - 0.06, v0: 1.02, v1: 1.042 }, 0.03, 0.05, steel),
+    ...leaf({ u0: d1 - 0.085, u1: d1 - 0.055, v0: 0.86, v1: 0.92 }, 0.008, steel),
+    ...leaf({ u0: d1 - 0.074, u1: d1 - 0.066, v0: 0.875, v1: 0.9 }, 0.009, dark),
+    ...leaf({ u0: d0 + 0.03, u1: d1 - 0.03, v0: 0.03, v1: 0.25 }, 0.003, steel),
+    // Threshold strip: the floor stops at the wall face, the leaf sits 2 cm behind it.
+    ...box(f, { u0: d0, u1: d1, v0: 0, v1: 0.006 }, -0.065, 0.02, steel),
+    // Vision panel: steel bead around frosted glass that lets the corridor light through.
+    ...leaf({ u0: d1 - 0.4, u1: d1 - 0.16, v0: 1.23, v1: 2.02 }, 0.008, steel),
+    ...leaf(
+      { u0: d1 - 0.38, u1: d1 - 0.18, v0: 1.25, v1: 2.0 },
+      0.01,
+      casing.clone().multiplyScalar(0.84),
+    ),
+    // Overhead closer body and its arm towards the door's middle.
+    ...leaf(
+      { u0: d0 + 0.08, u1: d0 + 0.38, v0: DOOR_HEIGHT - 0.12, v1: DOOR_HEIGHT - 0.05 },
+      0.055,
+      steel,
+    ),
+    ...box(
+      f,
+      { u0: d0 + 0.36, u1: d0 + 0.62, v0: DOOR_HEIGHT - 0.07, v1: DOOR_HEIGHT - 0.05 },
+      0.02,
+      0.035,
+      steel,
+    ),
+  ]
+  for (const v of [0.3, 1.2, 2.1]) {
+    parts.push(
+      ...box(
+        f,
+        { u0: d0 - 0.008, u1: d0 + 0.012, v0: v - 0.05, v1: v + 0.05 },
+        -0.03,
+        -0.012,
+        steel,
+      ),
+    )
+  }
   return parts
 }
 
@@ -351,22 +459,22 @@ export function buildRoomTrim(
       const d0 = door.offset - door.width / 2
       const d1 = door.offset + door.width / 2
       const top = Math.min(DOOR_HEIGHT + JAMB_WIDTH, room.height - CEILING_ANGLE.height)
+      // A shut door's frame lines the reveal back to the leaf, or the outdoor panorama shows
+      // through the gap between leaf and casing at an angle.
+      const back = door.to === undefined ? -0.06 : 0
       for (const b of [
         { u0: d0 - JAMB_WIDTH, u1: d0, v0: 0, v1: top },
         { u0: d1, u1: d1 + JAMB_WIDTH, v0: 0, v1: top },
         { u0: d0, u1: d1, v0: DOOR_HEIGHT, v1: top },
       ]) {
-        parts.push(...box(f, b, 0, JAMB_DEPTH, casing))
+        parts.push(...box(f, b, back, JAMB_DEPTH, casing))
       }
       // A door that leads nowhere in the model (the corridor) is drawn shut, so the opening
       // never shows the outdoor panorama.
       if (door.to === undefined) {
         const leaf = litColor(doorColor, light, brightness)
         parts.push(...box(f, { u0: d0, u1: d1, v0: 0, v1: DOOR_HEIGHT }, -0.06, -0.02, leaf))
-        const handle = litColor(handleColor, light, brightness)
-        parts.push(
-          ...box(f, { u0: d1 - 0.16, u1: d1 - 0.04, v0: 1.02, v1: 1.045 }, -0.02, 0.045, handle),
-        )
+        parts.push(...doorHardware(f, d0, d1, litColor(handleColor, light, brightness), casing))
       }
     }
 
@@ -411,13 +519,15 @@ function withUv(g: BufferGeometry): BufferGeometry {
  * Sunlight patches thrown onto the floor by each window: a soft parallelogram slanting away
  * from the wall, as if the sun stood high to the side. Additive, one draw call per room.
  */
-export function buildSunPatches(room: RoomDef): BufferGeometry | null {
+export function buildSunPatches(room: RoomDef, covered: number[] = []): BufferGeometry | null {
   const parts: BufferGeometry[] = []
-  for (const win of room.windows) {
+  for (const [i, win] of room.windows.entries()) {
     const f = wallFrame(room, win.wall)
+    // A blind covering the top of the window cuts the far end of its patch, not the near end.
+    const open = win.height * (1 - Math.min(1, Math.max(0, covered[i] ?? 0)))
     const near = 0.25 + win.sill * 0.35
-    const far = near + win.height * 0.85
-    const skew = win.height * 0.35
+    const far = near + open * 0.85
+    const skew = open * 0.35
     const u0 = win.offset - win.width / 2
     const u1 = win.offset + win.width / 2
     parts.push(

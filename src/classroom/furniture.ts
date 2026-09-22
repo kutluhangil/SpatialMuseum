@@ -14,36 +14,57 @@ import { palette } from '../design/tokens'
 import { CLASSROOM_LIGHT } from '../design/light'
 import { litColor } from '../scene/WallBuilder'
 import { wallFrame, wallPoint, wallYaw } from '../scene/wallFrame'
-import type { ClassroomLayout, Placed } from './layout'
+import { daylight } from '../scene/bakedLight'
+import { hashSeed, seededRandom, type ClassroomLayout, type Placed, type WallSpot } from './layout'
 
 // Faked key light from above: tops brightest, faces turned away darkest. Same idea as the
 // walls' SIDE_BRIGHTNESS, so furniture sits in the room's baked light without runtime lights.
 const FACE_SHADE = [0.88, 0.82, 1.06, 0.62, 0.95, 0.78] // +x, -x, +y, -y, +z, -z (BoxGeometry group order)
+// Ceiling fixtures are seen from below and lit by the panels and the floor bounce: undersides brightest.
+const CEILING_SHADE = [0.9, 0.9, 0.8, 1, 0.9, 0.9]
+
+type CylinderShade = { top: number; side: number; bottom: number }
+const CYLINDER_SHADE: CylinderShade = { top: 1.05, side: 0.85, bottom: 0.65 }
+const CEILING_CYLINDER_SHADE: CylinderShade = { top: 0.8, side: 0.9, bottom: 1 }
 
 const lit = (hex: string) => litColor(hex, CLASSROOM_LIGHT)
 
 /** A box with per-face baked shading, non-indexed so each face keeps its own colour. */
-function shadedBox(w: number, h: number, d: number, color: Color): BufferGeometry {
+function shadedBox(
+  w: number,
+  h: number,
+  d: number,
+  color: Color,
+  shade: readonly number[] = FACE_SHADE,
+): BufferGeometry {
   const g = new BoxGeometry(w, h, d).toNonIndexed()
   g.deleteAttribute('uv')
   const n = g.getAttribute('position').count
   const colors: number[] = []
   for (let i = 0; i < n; i++) {
-    const c = color.clone().multiplyScalar(FACE_SHADE[Math.floor(i / 6)] ?? 1)
+    const c = color.clone().multiplyScalar(shade[Math.floor(i / 6)] ?? 1)
     colors.push(c.r, c.g, c.b)
   }
   g.setAttribute('color', new Float32BufferAttribute(colors, 3))
   return g
 }
 
-function shadedCylinder(r: number, h: number, color: Color, segments = 24): BufferGeometry {
+function shadedCylinder(
+  r: number,
+  h: number,
+  color: Color,
+  segments = 24,
+  shade: CylinderShade = CYLINDER_SHADE,
+): BufferGeometry {
   const g = new CylinderGeometry(r, r, h, segments).toNonIndexed()
   g.deleteAttribute('uv')
   const normals = g.getAttribute('normal')
   const colors: number[] = []
   for (let i = 0; i < normals.count; i++) {
     const up = normals.getY(i)
-    const c = color.clone().multiplyScalar(up > 0.5 ? 1.05 : up < -0.5 ? 0.65 : 0.85)
+    const c = color
+      .clone()
+      .multiplyScalar(up > 0.5 ? shade.top : up < -0.5 ? shade.bottom : shade.side)
     colors.push(c.r, c.g, c.b)
   }
   g.setAttribute('color', new Float32BufferAttribute(colors, 3))
@@ -55,6 +76,16 @@ function part(g: BufferGeometry, x: number, y: number, z: number, tiltX = 0): Bu
   const m = new Matrix4().compose(
     new Vector3(x, y, z),
     new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), tiltX),
+    new Vector3(1, 1, 1),
+  )
+  return g.applyMatrix4(m)
+}
+
+/** Local part turned by `yaw` about its own vertical axis, then placed at (x, y, z). */
+function turned(g: BufferGeometry, x: number, y: number, z: number, yaw: number): BufferGeometry {
+  const m = new Matrix4().compose(
+    new Vector3(x, y, z),
+    new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yaw),
     new Vector3(1, 1, 1),
   )
   return g.applyMatrix4(m)
@@ -136,11 +167,182 @@ function lecturerDesk(): BufferGeometry[] {
   ]
 }
 
+// Notebooks, pens and bottles left on some desks: what makes a room read as used, not rendered.
+const ITEMS = { notebook: 0.35, pen: 0.5, bottle: 0.12 }
+const NOTEBOOK_COVERS = [palette.adacayi, palette.alacakaranlik, palette.kolostrum, palette.onsut]
+
+function deskItems(rand: () => number): BufferGeometry[] {
+  const top = CLASSROOM.desk.height
+  const out: BufferGeometry[] = []
+  for (const seat of [-CLASSROOM.desk.width / 4, CLASSROOM.desk.width / 4]) {
+    if (rand() < ITEMS.notebook) {
+      const cover = NOTEBOOK_COVERS[Math.floor(rand() * NOTEBOOK_COVERS.length)] ?? palette.onsut
+      const yaw = (rand() - 0.5) * 0.6
+      const x = seat + (rand() - 0.5) * 0.12
+      const z = 0.02 + rand() * 0.08
+      out.push(turned(shadedBox(0.21, 0.006, 0.297, lit(palette.kagit)), x, top + 0.003, z, yaw))
+      out.push(turned(shadedBox(0.212, 0.002, 0.299, lit(cover)), x, top + 0.007, z, yaw))
+      if (rand() < ITEMS.pen) {
+        const pen = shadedBox(0.14, 0.009, 0.009, lit(palette.murekkep))
+        out.push(turned(pen, x + 0.14, top + 0.005, z + (rand() - 0.5) * 0.1, rand() * Math.PI))
+      }
+    }
+    if (rand() < ITEMS.bottle) {
+      const x = seat + (rand() < 0.5 ? -0.22 : 0.22)
+      const z = -0.12 + rand() * 0.06
+      out.push(part(shadedCylinder(0.033, 0.2, lit(palette.sise), 16), x, top + 0.1, z))
+      out.push(part(shadedCylinder(0.017, 0.025, lit(palette.kabuk), 12), x, top + 0.2125, z))
+    }
+  }
+  return out
+}
+
+// Marker colours on the board tray, left to right; the eraser sits at the other end.
+const MARKER_CAPS = [palette.murekkep, palette.kalemMavi, palette.alarm, palette.adacayi]
+const MARKER = { r: 0.0095, body: 0.105, cap: 0.035 }
+
+/** A whiteboard marker lying along local X, cap towards +X, resting on y = 0. */
+function marker(cap: string): BufferGeometry[] {
+  const body = shadedCylinder(MARKER.r, MARKER.body, lit(palette.beyazTahta), 12).rotateZ(
+    Math.PI / 2,
+  )
+  const tip = shadedCylinder(MARKER.r * 1.05, MARKER.cap, lit(cap), 12).rotateZ(Math.PI / 2)
+  return [part(body, -MARKER.cap / 2, MARKER.r, 0), part(tip, MARKER.body / 2, MARKER.r * 1.05, 0)]
+}
+
+/** Square ceiling diffuser: flush plate with stepped concentric louvres, as seen from below. */
+function diffuser(x: number, z: number, ceiling: number): BufferGeometry[] {
+  const white = lit(palette.tavan)
+  const out = [part(shadedBox(0.59, 0.006, 0.59, white, CEILING_SHADE), x, ceiling - 0.003, z)]
+  for (const [i, size] of [0.5, 0.4, 0.3, 0.2, 0.1].entries()) {
+    // Each louvre steps 1.5 mm further down, so no two faces share a plane.
+    const bottom = ceiling - 0.006 - 0.0015 * (i + 1)
+    const shade = i % 2 === 0 ? 0.82 : 1
+    const box = shadedBox(size, 0.004, size, white.clone().multiplyScalar(shade), CEILING_SHADE)
+    out.push(part(box, x, bottom + 0.002, z))
+  }
+  return out
+}
+
+function smokeDetector(x: number, z: number, ceiling: number): BufferGeometry[] {
+  const white = lit(palette.tavan)
+  const cyl = (r: number, h: number, c: Color) =>
+    shadedCylinder(r, h, c, 20, CEILING_CYLINDER_SHADE)
+  return [
+    part(cyl(0.055, 0.03, white), x, ceiling - 0.015, z),
+    part(cyl(0.035, 0.012, white.clone().multiplyScalar(0.94)), x, ceiling - 0.036, z),
+    // Status LED on the rim.
+    part(
+      shadedBox(0.006, 0.004, 0.006, lit(palette.alarm), CEILING_SHADE),
+      x + 0.04,
+      ceiling - 0.031,
+      z,
+    ),
+  ]
+}
+
+function ceilingSpeaker(x: number, z: number, ceiling: number): BufferGeometry[] {
+  const cyl = (r: number, h: number, c: Color) =>
+    shadedCylinder(r, h, c, 24, CEILING_CYLINDER_SHADE)
+  return [
+    part(cyl(0.11, 0.006, lit(palette.tavan)), x, ceiling - 0.003, z),
+    part(cyl(0.095, 0.004, lit(palette.aluminyum).multiplyScalar(0.82)), x, ceiling - 0.008, z),
+  ]
+}
+
+/**
+ * What the lecturer leaves on the desk between classes: a stack of marked papers, a mug and a
+ * small pot plant. Local +Z faces the students, so everything sits on the lecturer's side.
+ */
+function lecturerDeskItems(): BufferGeometry[] {
+  const top = 0.76
+  const out = [
+    part(shadedBox(0.215, 0.028, 0.3, lit(palette.kagit)), -0.4, top + 0.014, -0.02),
+    // The top sheet has slipped a little off the stack.
+    turned(shadedBox(0.21, 0.002, 0.297, lit(palette.onsut)), -0.38, top + 0.029, 0.01, 0.09),
+    part(shadedCylinder(0.037, 0.095, lit(palette.beyazTahta), 16), -0.08, top + 0.048, -0.05),
+    part(
+      shadedCylinder(0.034, 0.004, lit(palette.mese).multiplyScalar(0.7), 16),
+      -0.08,
+      top + 0.094,
+      -0.05,
+    ),
+    part(shadedCylinder(0.062, 0.1, lit(palette.mese), 16), 0.5, top + 0.05, -0.08),
+    part(
+      shadedCylinder(0.066, 0.016, lit(palette.mese).multiplyScalar(1.05), 16),
+      0.5,
+      top + 0.096,
+      -0.08,
+    ),
+  ]
+  // Five leaves fanning out of the pot, each turned and tipped away from the centre.
+  const leaves: [number, number, number, number][] = [
+    [0.09, 0.0, 0.4, 1],
+    [-0.07, 0.03, 1.7, 0.85],
+    [0.02, -0.08, 2.9, 0.9],
+    [-0.05, -0.04, 4.1, 0.75],
+    [0.04, 0.06, 5.2, 0.8],
+  ]
+  for (const [dx, dz, yaw, scale] of leaves) {
+    const leaf = shadedBox(0.115 * scale, 0.014, 0.05 * scale, lit(palette.adacayi))
+    out.push(turned(leaf, 0.5 + dx, top + 0.12 + scale * 0.05, -0.08 + dz, yaw))
+  }
+  return out
+}
+
+/** Pedal-less waste bin: dark plastic body with a lighter rim, as in every lecture room. */
+function wasteBin(): BufferGeometry[] {
+  const body = lit(palette.metal).lerp(lit(palette.korumaBandi), 0.35)
+  return [
+    part(shadedCylinder(0.16, 0.42, body, 20), 0, 0.21, 0),
+    part(shadedCylinder(0.17, 0.03, lit(palette.korumaBandi), 20), 0, 0.425, 0),
+    // Dark opening, a touch below the rim.
+    part(shadedCylinder(0.15, 0.004, lit(palette.murekkep).multiplyScalar(0.6), 20), 0, 0.405, 0),
+  ]
+}
+
+/** Thermostatic valve and return pipe at the left end of a panel radiator. */
+function radiatorValve(): BufferGeometry[] {
+  const steel = lit(palette.aluminyum)
+  return [
+    part(shadedCylinder(0.014, 0.42, steel, 10), 0, 0.21, 0),
+    part(
+      shadedCylinder(0.026, 0.075, lit(palette.beyazTahta), 12).rotateZ(Math.PI / 2),
+      -0.05,
+      0.6,
+      0,
+    ),
+    part(shadedCylinder(0.014, 0.12, steel, 10), 0, 0.54, 0),
+  ]
+}
+
+// Notices pinned to the wall above the coat rail: a few sizes, each slightly askew.
+const PAPER = { width: 0.21, height: 0.297, tilt: 0.05 }
+const PIN_COLOURS = [palette.alarm, palette.kalemMavi, palette.kolostrum, palette.adacayi]
+
+/** Folds the room's baked daylight into every vertex colour of the merged furniture. */
+function bakeDaylight(g: BufferGeometry, room: RoomDef): BufferGeometry {
+  const pos = g.getAttribute('position')
+  const col = g.getAttribute('color')
+  for (let i = 0; i < pos.count; i++) {
+    const k = daylight(room, pos.getX(i), pos.getZ(i))
+    col.setXYZ(i, col.getX(i) * k, col.getY(i) * k, col.getZ(i) * k)
+  }
+  return g
+}
+
 export function buildClassroomFurniture(room: RoomDef, layout: ClassroomLayout): BufferGeometry {
   const c = room.classroom
   if (!c) throw new Error(`room "${room.id}" is not a classroom`)
   const parts: BufferGeometry[] = []
-  for (const d of layout.desks) parts.push(...place(studentDesk(), d))
+  const rand = seededRandom(hashSeed(`${room.id}:desk-items`))
+  const seat = layout.spawnSeat.position
+  for (const d of layout.desks) {
+    parts.push(...place(studentDesk(), d))
+    // The visitor's desk stays clear: the lesson buttons sit there.
+    const own = Math.hypot(d.position[0] - seat[0], d.position[2] - seat[2]) < CLASSROOM.desk.width
+    if (!own) parts.push(...place(deskItems(rand), d))
+  }
   for (const ch of layout.chairs) parts.push(...place(studentChair(), ch))
   parts.push(...place(lecturerDesk(), layout.lecturerDesk))
   parts.push(...place(studentChair(), layout.lecturerChair))
@@ -270,8 +472,203 @@ export function buildClassroomFurniture(room: RoomDef, layout: ClassroomLayout):
     )
   }
 
+  // Markers and eraser on the board tray (tray top at v0 - 0.02).
+  const trayTop = b.v0 - 0.02
+  for (const [i, cap] of MARKER_CAPS.entries()) {
+    for (const m of marker(cap)) {
+      parts.push(onWall(bu + bw * 0.18 + i * 0.16, trayTop, 0.035 + (i % 2) * 0.025, m))
+    }
+  }
+  const eraserU = bu - bw * 0.3
+  parts.push(
+    onWall(eraserU, trayTop + 0.0225, 0.05, shadedBox(0.15, 0.035, 0.055, lit(palette.kabuk))),
+  )
+  parts.push(
+    onWall(eraserU, trayTop + 0.0025, 0.05, shadedBox(0.15, 0.005, 0.055, lit(palette.murekkep))),
+  )
+
+  // Roller blinds inside the window reveals: cassette at the head, fabric part-way down, weighted
+  // bottom bar and the bead chain on the right. They sit room-side of the glazing bars.
+  for (const bl of layout.blinds) {
+    const f = wallFrame(room, bl.wall)
+    const y = wallYaw(f)
+    const inner = bl.width - 0.02
+    const d = -0.065
+    parts.push(
+      onWall(bl.u, bl.top - 0.04, d, shadedBox(inner, 0.08, 0.07, lit(palette.onsut)), f, y),
+    )
+    const fabricTop = bl.top - 0.08
+    parts.push(
+      onWall(
+        bl.u,
+        (fabricTop + bl.bottom) / 2,
+        d,
+        shadedBox(inner - 0.02, fabricTop - bl.bottom, 0.004, lit(palette.stor)),
+        f,
+        y,
+      ),
+    )
+    parts.push(
+      onWall(
+        bl.u,
+        bl.bottom,
+        d,
+        shadedBox(inner - 0.01, 0.025, 0.018, lit(palette.aluminyum)),
+        f,
+        y,
+      ),
+    )
+    const chainU = bl.u + inner / 2 - 0.03
+    const chainBottom = bl.bottom - 0.45
+    parts.push(
+      onWall(
+        chainU,
+        (fabricTop + chainBottom) / 2,
+        -0.028,
+        shadedBox(0.005, fabricTop - chainBottom, 0.005, lit(palette.aluminyum)),
+        f,
+        y,
+      ),
+    )
+  }
+
+  // Wall details: double sockets, a light switch and a fire alarm call point by each door.
+  const plastic = lit(palette.beyazTahta)
+  const spot = (w: WallSpot) => {
+    const f = wallFrame(room, w.wall)
+    return { f, y: wallYaw(f) }
+  }
+  for (const so of layout.sockets) {
+    const { f, y } = spot(so)
+    parts.push(onWall(so.u, so.v, 0.005, shadedBox(0.16, 0.085, 0.01, plastic), f, y))
+    for (const du of [-0.039, 0.039]) {
+      const cup = shadedCylinder(0.023, 0.004, plastic.clone().multiplyScalar(0.86), 16)
+      parts.push(onWall(so.u + du, so.v, 0.011, cup.rotateX(Math.PI / 2), f, y))
+    }
+  }
+  for (const sw of layout.switches) {
+    const { f, y } = spot(sw)
+    parts.push(onWall(sw.u, sw.v, 0.005, shadedBox(0.085, 0.085, 0.01, plastic), f, y))
+    parts.push(
+      onWall(
+        sw.u,
+        sw.v,
+        0.012,
+        shadedBox(0.05, 0.05, 0.006, plastic.clone().multiplyScalar(0.93)),
+        f,
+        y,
+      ),
+    )
+  }
+  for (const cp of layout.callPoints) {
+    const { f, y } = spot(cp)
+    parts.push(onWall(cp.u, cp.v, 0.0225, shadedBox(0.095, 0.095, 0.045, lit(palette.alarm)), f, y))
+    parts.push(onWall(cp.u, cp.v, 0.046, shadedBox(0.055, 0.055, 0.004, plastic), f, y))
+  }
+
+  parts.push(...place(lecturerDeskItems(), layout.lecturerDesk))
+
+  // Waste bin beside the lecturer, coat rail on the back wall, thermostatic radiator valves.
+  parts.push(...place(wasteBin(), layout.bin))
+  if (layout.coatRail) {
+    const f = wallFrame(room, layout.coatRail.wall)
+    const y = wallYaw(f)
+    const { u, v, width } = layout.coatRail
+    parts.push(onWall(u, v, 0.012, shadedBox(width, 0.09, 0.024, lit(palette.laminat)), f, y))
+    for (const du of [-width / 3, 0, width / 3]) {
+      parts.push(
+        onWall(u + du, v - 0.01, 0.045, shadedBox(0.014, 0.05, 0.06, lit(palette.aluminyum)), f, y),
+      )
+      parts.push(
+        onWall(
+          u + du,
+          v - 0.035,
+          0.075,
+          shadedBox(0.014, 0.03, 0.014, lit(palette.aluminyum)),
+          f,
+          y,
+        ),
+      )
+    }
+  }
+  for (const r of layout.radiators) {
+    const f = wallFrame(room, r.wall)
+    const y = wallYaw(f)
+    for (const g of radiatorValve()) parts.push(onWall(r.u - r.width / 2 - 0.04, 0, 0.09, g, f, y))
+  }
+
+  // Notices pinned to the wall above the coat rail.
+  const noticeRand = seededRandom(hashSeed(`${room.id}:notices`))
+  for (const n of layout.notices) {
+    const f = wallFrame(room, n.wall)
+    const y = wallYaw(f)
+    const scale = 0.8 + noticeRand() * 0.3
+    const w = PAPER.width * scale
+    const h = PAPER.height * scale
+    const tilt = (noticeRand() - 0.5) * PAPER.tilt
+    const sheet = shadedBox(w, h, 0.002, lit(palette.kagit)).rotateZ(tilt)
+    parts.push(onWall(n.u, n.v, 0.004, sheet, f, y))
+    const pin = PIN_COLOURS[Math.floor(noticeRand() * PIN_COLOURS.length)] ?? palette.alarm
+    const head = shadedCylinder(0.008, 0.012, lit(pin), 10).rotateX(Math.PI / 2)
+    parts.push(onWall(n.u, n.v + h / 2 - 0.025, 0.011, head, f, y))
+  }
+
+  // Ceiling equipment in the tile grid: air diffusers, smoke detectors, speakers.
+  const ceil = room.height
+  for (const p of layout.ceiling.diffusers) parts.push(...diffuser(p.x, p.z, ceil))
+  for (const p of layout.ceiling.smokeDetectors) parts.push(...smokeDetector(p.x, p.z, ceil))
+  for (const p of layout.ceiling.speakers) parts.push(...ceilingSpeaker(p.x, p.z, ceil))
+
   const merged = mergeGeometries(parts)
   parts.forEach((p) => p.dispose())
   if (!merged) throw new Error(`could not merge classroom furniture of room "${room.id}"`)
+  return bakeDaylight(merged, room)
+}
+
+/** Soft floor quad centred under a footprint, turned by `yaw`; the texture's dark core is ~60 %. */
+function shadowQuad(x: number, z: number, w: number, d: number, yaw: number): BufferGeometry {
+  const g = new BufferGeometry()
+  const hw = w / 2
+  const hd = d / 2
+  g.setAttribute(
+    'position',
+    new Float32BufferAttribute([-hw, 0, hd, hw, 0, hd, hw, 0, -hd, -hw, 0, -hd], 3),
+  )
+  g.setAttribute('normal', new Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0], 3))
+  g.setAttribute('uv', new Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2))
+  // Counter-clockwise seen from above (+Y).
+  g.setIndex([0, 1, 2, 0, 2, 3])
+  return turned(g, x, CONTACT_SHADOW_Y, z, yaw)
+}
+
+// Just above the floor, under the additive sun patches (0.004).
+const CONTACT_SHADOW_Y = 0.002
+// Quad size relative to the footprint, so the blurred core covers the area between the legs.
+const SPREAD = 1.45
+
+/** Contact shadows under desks, chairs and radiators, merged into one transparent mesh. */
+export function buildContactShadows(room: RoomDef, layout: ClassroomLayout): BufferGeometry {
+  const { desk } = CLASSROOM
+  const parts: BufferGeometry[] = []
+  for (const d of layout.desks) {
+    parts.push(
+      shadowQuad(d.position[0], d.position[2], desk.width * SPREAD, desk.depth * SPREAD, d.yaw),
+    )
+  }
+  for (const ch of [...layout.chairs, layout.lecturerChair]) {
+    parts.push(shadowQuad(ch.position[0], ch.position[2], 0.44 * SPREAD, 0.42 * SPREAD, ch.yaw))
+  }
+  const l = layout.lecturerDesk
+  parts.push(shadowQuad(l.position[0], l.position[2], 1.4 * SPREAD, 0.7 * SPREAD, l.yaw))
+  const bin = layout.bin
+  parts.push(shadowQuad(bin.position[0], bin.position[2], 0.42, 0.42, bin.yaw))
+  for (const r of layout.radiators) {
+    const f = wallFrame(room, r.wall)
+    const [x, , z] = wallPoint(f, r.u, 0, 0.12)
+    parts.push(shadowQuad(x, z, r.width * 1.2, 0.4, wallYaw(f)))
+  }
+  const merged = mergeGeometries(parts)
+  parts.forEach((p) => p.dispose())
+  if (!merged) throw new Error(`could not merge contact shadows of room "${room.id}"`)
   return merged
 }

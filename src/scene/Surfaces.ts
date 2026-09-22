@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { RoomDef } from '../schema/museum'
 import type { RoomLight } from '../design/light'
 import { ceilingGrid } from './ceilingGrid'
+import { daylight } from './bakedLight'
 
 /** Physical size of one repeat of the floor texture (Poly Haven interior_tiles: 1.9 m). */
 export const FLOOR_TILE_METRES = 1.9
@@ -42,6 +43,7 @@ function gridGeometry(
   facingUp: boolean,
   colorAt: (x: number, z: number) => Color,
   uvScale: number | null,
+  uvOrigin: { x: number; z: number } = { x: 0, z: 0 },
 ): BufferGeometry {
   const { xs, zs } = grid(room, 1)
   const pos: number[] = []
@@ -53,7 +55,7 @@ function gridGeometry(
       pos.push(xx, y, zz)
       const c = colorAt(xx, zz)
       col.push(c.r, c.g, c.b)
-      if (uvScale) uv.push(xx / uvScale, -zz / uvScale)
+      if (uvScale) uv.push((xx - uvOrigin.x) / uvScale, -(zz - uvOrigin.z) / uvScale)
     }
   }
   const w = xs.length
@@ -90,21 +92,18 @@ export function buildFloor(room: RoomDef, light: RoomLight, tileMetres: number):
   const base = new Color(1, 1, 1)
     .lerp(new Color(light.light), light.tint)
     .multiplyScalar(light.exposure)
-  const daylit = room.windows.some((w) => w.wall === 'west')
   return gridGeometry(
     room,
     0,
     true,
     (px, pz) => {
       const k = 1 - 0.28 * (1 - smooth(edgeDistance(room, px, pz) / 0.7))
-      const daylight = daylit ? 0.06 * (1 - smooth((px - room.rect.x) / 4)) : 0
-      return base.clone().multiplyScalar(k + daylight)
+      return base.clone().multiplyScalar(k * daylight(room, px, pz))
     },
     tileMetres,
   )
 }
 
-const T_BAR = 0.024
 const PANEL_FRAME = 0.02
 
 function flatRect(
@@ -131,53 +130,61 @@ function flatRect(
 }
 
 /**
- * Suspended ceiling: 60 cm tiles with a white T-bar grid and flush LED panels, the tiles lit
- * brighter around each panel. One merged geometry, one draw call.
+ * Suspended ceiling surface, lit brighter around each LED panel. The tile pattern (T-bar grid and
+ * mineral-fibre speckle) comes from a mipmapped texture repeated once per 60 cm tile: thin grid
+ * geometry would shimmer in the headset, a filtered texture does not.
  */
-export function buildCeiling(room: RoomDef, tileColor: string, light: RoomLight): BufferGeometry {
+export function buildCeiling(room: RoomDef, light: RoomLight): BufferGeometry {
   const grid = ceilingGrid(room.rect)
-  const base = new Color(tileColor)
+  const base = new Color(1, 1, 1)
     .lerp(new Color(light.light), light.tint)
     .multiplyScalar(light.exposure)
-  const surface = gridGeometry(
+  // The first whole-tile grid line is the texture's origin, so tile edges land on the grid.
+  const origin = { x: grid.xs[1] ?? room.rect.x, z: grid.zs[1] ?? room.rect.z }
+  return gridGeometry(
     room,
     room.height,
     false,
     (px, pz) => {
       const seam = 1 - 0.18 * (1 - smooth(edgeDistance(room, px, pz) / 0.9))
       const near = Math.min(...grid.panels.map((p) => Math.hypot(px - p.x, pz - p.z)))
-      return base.clone().multiplyScalar(0.86 * seam + 0.1 * (1 - smooth(near / 1.4)))
+      const k = 0.9 * seam + 0.1 * (1 - smooth(near / 1.4))
+      return base.clone().multiplyScalar(k * daylight(room, px, pz))
     },
-    null,
+    grid.tile,
+    origin,
   )
+}
+
+/** Flush LED panels in their frames, just below the ceiling surface. */
+export function buildCeilingPanels(
+  room: RoomDef,
+  frameColor: string,
+  light: RoomLight,
+): BufferGeometry {
+  const grid = ceilingGrid(room.rect)
   const y = room.height - 0.003
-  const bar = base.clone().multiplyScalar(0.97)
-  const parts: BufferGeometry[] = [surface]
-  const { x, z, width, depth } = room.rect
-  for (const gx of grid.xs.slice(1, -1)) {
-    parts.push(flatRect(gx - T_BAR / 2, z, gx + T_BAR / 2, z + depth, y, bar))
-  }
-  for (const gz of grid.zs.slice(1, -1)) {
-    parts.push(flatRect(x, gz - T_BAR / 2, x + width, gz + T_BAR / 2, y - 0.001, bar))
-  }
   const panel = new Color(light.light)
-  const frame = base.clone().multiplyScalar(0.92)
+  const frame = new Color(frameColor)
+    .lerp(new Color(light.light), light.tint)
+    .multiplyScalar(light.exposure * 0.92)
   const h = grid.tile / 2
+  const parts: BufferGeometry[] = []
   for (const p of grid.panels) {
-    parts.push(flatRect(p.x - h, p.z - h, p.x + h, p.z + h, y - 0.002, frame))
+    parts.push(flatRect(p.x - h, p.z - h, p.x + h, p.z + h, y, frame))
     parts.push(
       flatRect(
         p.x - h + PANEL_FRAME,
         p.z - h + PANEL_FRAME,
         p.x + h - PANEL_FRAME,
         p.z + h - PANEL_FRAME,
-        y - 0.003,
+        y - 0.001,
         panel,
       ),
     )
   }
   const merged = mergeGeometries(parts)
-  parts.forEach((p) => p.dispose())
-  if (!merged) throw new Error(`could not merge ceiling of room "${room.id}"`)
+  parts.forEach((g) => g.dispose())
+  if (!merged) throw new Error(`could not merge ceiling panels of room "${room.id}"`)
   return merged
 }

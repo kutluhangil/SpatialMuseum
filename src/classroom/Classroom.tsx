@@ -2,7 +2,8 @@ import { useEffect, useMemo } from 'react'
 import type { Museum, RoomDef } from '../schema/museum'
 import { wallFrame, wallPoint, wallYaw } from '../scene/wallFrame'
 import { classroomLayout } from './layout'
-import { buildClassroomFurniture } from './furniture'
+import { buildClassroomFurniture, buildContactShadows } from './furniture'
+import { softShadowTexture } from '../design/proceduralTextures'
 import { lessonView } from '../lesson/lesson'
 import { useLessonStore } from '../lesson/lessonStore'
 import { Whiteboard } from '../lesson/Whiteboard'
@@ -16,6 +17,8 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
   const layout = useMemo(() => classroomLayout(room), [room])
   const furniture = useMemo(() => buildClassroomFurniture(room, layout), [room, layout])
   useEffect(() => () => furniture.dispose(), [furniture])
+  const shadows = useMemo(() => buildContactShadows(room, layout), [room, layout])
+  useEffect(() => () => shadows.dispose(), [shadows])
   const index = useLessonStore((s) => s.index)
   const hasLesson = museum.lesson.steps.length > 0
   const view = hasLesson ? lessonView(museum.lesson, index) : null
@@ -40,6 +43,16 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
     <group>
       <mesh geometry={furniture} name={`classroom:${room.id}`}>
         <meshBasicMaterial vertexColors />
+      </mesh>
+      {/* Grounds every desk and chair: without it the furniture seems to float on the tiles. */}
+      <mesh geometry={shadows} renderOrder={1}>
+        <meshBasicMaterial
+          color="#000000"
+          alphaMap={softShadowTexture()}
+          transparent
+          opacity={0.55}
+          depthWrite={false}
+        />
       </mesh>
       {view && (
         <>

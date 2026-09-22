@@ -21,6 +21,11 @@ export const palette = {
   perde: '#F2F2EF', // projection screen fabric
   radyator: '#E6E6E3', // panel radiators
   kapi: '#9C7B58', // wood-laminate classroom door
+  sise: '#CFE2EA', // water bottles left on desks
+  kagit: '#F4F1EA', // notebook paper edges
+  stor: '#DCD6C8', // roller blind fabric
+  alarm: '#C7362E', // fire alarm call point, red marker cap
+  kalemMavi: '#2F5E9E', // blue marker cap
 } as const
 
 export type WallTone = 'kirikBeyaz'

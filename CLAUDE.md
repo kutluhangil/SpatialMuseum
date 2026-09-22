@@ -37,4 +37,5 @@ reduced-motion, ≥ 7:1 metin kontrastı.
 
 ## Ortam notları
 - `/usr/bin/git` ve `/usr/bin/python3` Xcode lisansı onaylanmadığı için çalışmıyor; `/opt/homebrew/bin/` sürümlerini kullan.
+- Vite'ın dosya izleyicisi `/Volumes/…` üzerindeki değişiklikleri kaçırabiliyor: görsel doğrulamadan önce `npm run dev`'i yeniden başlat (bayat modülle yanlış sonuç çıkar).
 - `@react-three/fiber` 9.7 React `<19.3` istiyor; React 19.2.x'e sabit. three.js tek kopya için `package.json` → `overrides`.

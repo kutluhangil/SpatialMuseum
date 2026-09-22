@@ -3,6 +3,13 @@
 Newest entries at the top.
 
 ## 2026-09-22
+- Classroom visual level 2: roller blinds part-way down in every window (cassette, bottom bar, bead chain; seeded drop); double sockets along the walls, light switch and fire alarm call point by the door; four markers and an eraser on the whiteboard tray; door hardware (lever on rosette, key escutcheon, frosted vision panel, kick plate, hinges, overhead closer, threshold); ceiling diffusers, smoke detectors and front speakers in whole grid tiles. All merged into existing meshes: no new draw calls.
+- Fixed: the outdoor panorama showed through the gap between the shut door leaf and its casing, and under the leaf.
+- Sunlight patches on the floor now stop where the blinds do: each patch is shortened by how far its window's blind is down.
+- Classroom visual level 3: waste bin beside the lecturer (with its own contact shadow), coat rail with three hooks and two pinned notices on the back wall, thermostatic valves and return pipes on the radiators.
+- Classroom visual level 4: the lecturer's desk is left in use — a stack of marked papers with the top sheet askew, a mug and a small pot plant.
+- Classroom visual pass: contact shadows under desks, chairs and radiators; chairs slightly turned and shifted (seeded, same every load; the visitor's own chair stays put); notebooks, pens and bottles on some desks; baked daylight across walls, floor, ceiling and furniture (window wall backlit, far side dimmer); Fresnel sheen on the glazed floor; tinted window glass with reflection streaks and tilt-and-turn handles; ceiling T-bar grid and mineral-fibre speckle baked into a mipmapped tile texture (no grid shimmer in the headset).
+- Fixed: soft shadows were invisible (alphaMap reads the green channel; the texture was black on transparent). Picture-frame drop shadows now show too.
 - Museum → university classroom: one realistic lecture room (9.6 × 8 m) with 20 two-person desks, lecturer desk, whiteboard, pull-down screen, ceiling projector, clock, radiators, cork board, suspended ceiling with LED panels and a beige ceramic tile floor (Poly Haven interior_tiles, CC0); all furniture merged into one draw call (worst view 24 draw calls, was 93).
 - Lesson flow: sections and ordered steps in museum.json v2; videos start on the projection screen, notes appear on the whiteboard; Next/Previous on the desk, N/Space/B keys and A/X/B/Y on controllers. The visitor starts seated in the second row and stands up when walking or teleporting.
 - museum.json v2 with a v1 migration; removed lobby and rooms, milk path, door signs, benches, skylights, light moods, corner props, gilt frames and the Poly Haven prop models. Doors that lead nowhere are drawn shut.
