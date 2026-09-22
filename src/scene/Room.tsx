@@ -27,8 +27,12 @@ import {
 import { FLOOR_TILE_METRES, buildCeiling, buildCeilingPanels, buildFloor } from './Surfaces'
 import { floorSheen } from './floorSheen'
 import { roomBlinds } from '../classroom/layout'
+import { useRoomStore } from '../classroom/roomStore'
 
 const FLOOR_URL = '/textures/floor-interior-tiles-2k.ktx2'
+
+// An unlit LED panel: dark grey acrylic, not black, because daylight still falls on it.
+const PANELS_OFF = '#727a80'
 
 // Glazed ceramic: strength of the grazing-angle reflection added to the floor colour.
 const FLOOR_SHEEN = 0.16
@@ -65,14 +69,16 @@ export function Room({ room, exhibits }: RoomProps) {
   const ceiling = useMemo(() => buildCeiling(room, light), [room, light])
   const panels = useMemo(() => buildCeilingPanels(room, palette.onsut, light), [room, light])
   const sheen = useMemo(() => floorSheen(light.light, FLOOR_SHEEN), [light])
+  const blindsDown = useRoomStore((s) => s.blindsDown)
+  const lightsOn = useRoomStore((s) => s.lightsOn)
   const sun = useMemo(() => {
-    const blinds = room.classroom ? roomBlinds(room) : []
+    const blinds = room.classroom && blindsDown ? roomBlinds(room) : []
     const covered = room.windows.map((w, i) => {
       const b = blinds[i]
       return b ? (b.top - b.bottom) / w.height : 0
     })
     return buildSunPatches(room, covered)
-  }, [room])
+  }, [room, blindsDown])
   const glass = useMemo(() => buildWindowGlass(room), [room])
   const glare = useMemo(() => buildWindowGlare(room), [room])
   const shadows = useMemo(() => buildFrameShadows(room, exhibits), [room, exhibits])
@@ -133,8 +139,9 @@ export function Room({ room, exhibits }: RoomProps) {
       <mesh geometry={ceiling}>
         <meshBasicMaterial map={ceilingMap} vertexColors />
       </mesh>
+      {/* Switched off, the panels stop being light sources and read as grey acrylic. */}
       <mesh geometry={panels}>
-        <meshBasicMaterial vertexColors />
+        <meshBasicMaterial vertexColors color={lightsOn ? '#ffffff' : PANELS_OFF} />
       </mesh>
       {shadows && (
         <mesh geometry={shadows} renderOrder={1}>

@@ -3,12 +3,11 @@ import { Viewer } from '../scene/Viewer'
 import { Museum } from '../scene/Museum'
 import { museum } from '../store/museumStore'
 import { usePlayerStore } from '../locomotion/playerStore'
-import { useLessonStore } from '../lesson/lessonStore'
 
 export function MuseumView() {
   useLayoutEffect(() => {
+    // The seat is always the spawn seat, but the lesson resumes at the saved step.
     usePlayerStore.getState().reset(museum.spawn.position, museum.spawn.yaw, museum.spawn.posture)
-    useLessonStore.getState().reset()
   }, [])
   return (
     <Viewer>

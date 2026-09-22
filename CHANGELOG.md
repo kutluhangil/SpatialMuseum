@@ -3,6 +3,12 @@
 Newest entries at the top.
 
 ## 2026-09-23
+- Real lesson: four sections and fourteen steps of breastfeeding teaching (first days, positions and latch, night feeds, art), written for students. Draft content — a lactation consultant should review it before any class uses it.
+- The lesson resumes where the student left off (localStorage, guarded), and `[` / `]` jump whole sections.
+- Sound: a procedural room tone and step clicks built in WebAudio (no audio files), started on the first gesture, with a switch in the corner that is remembered.
+- The light switch and the blind chains work: the LED panels go dark, the blinds roll up and down (instantly for anyone who asked for reduced motion), and the sunlight patches follow the blinds.
+- The window now looks onto a campus lawn with paths and benches (Poly Haven charolettenbrunn_park, CC0) instead of a meadow.
+- Visual regression tests: `npm run test:visual` drives three fixed viewpoints in headless Chromium, compares them against reference screenshots, checks the draw-call budget and fails on console errors.
 - Graphics pass: floor wear at the doorway and down the aisle baked into the tiles, window reflections smeared across the polished floor, full anisotropy on floor and ceiling.
 - The view outside reads as daylight: the panorama carries an outdoor exposure and haze gathering towards the horizon, so windows look bright rather than flat green.
 - Walls carry a faint plaster texture (world-anchored UVs, one square metre per repeat) instead of flat colour; the whiteboard keeps the ghosts of wiped marker.

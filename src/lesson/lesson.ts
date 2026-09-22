@@ -40,3 +40,26 @@ export function lessonView(lesson: LessonDef, index: number): LessonView {
 export function clampStep(index: number, delta: number, count: number): number {
   return Math.max(0, Math.min(count - 1, index + delta))
 }
+
+/**
+ * First step of the section `delta` sections away. From the middle of a section, going back lands
+ * on that section's own first step, the way a chapter button on a player behaves.
+ */
+export function sectionJump(lesson: LessonDef, index: number, delta: number): number {
+  const starts: number[] = []
+  lesson.steps.forEach((step, i) => {
+    if (lesson.steps[i - 1]?.section !== step.section) starts.push(i)
+  })
+  if (starts.length === 0) return index
+  const current = starts.filter((start) => start <= index).length - 1
+  if (delta < 0 && index > (starts[current] ?? 0)) return starts[current] ?? index
+  const target = Math.max(0, Math.min(starts.length - 1, current + delta))
+  return starts[target] ?? index
+}
+
+/** The step a returning student resumes at: whatever was stored, as long as it still exists. */
+export function savedStep(raw: string | null, count: number): number {
+  const index = Number(raw)
+  if (raw === null || !Number.isInteger(index)) return 0
+  return Math.max(0, Math.min(count - 1, index))
+}

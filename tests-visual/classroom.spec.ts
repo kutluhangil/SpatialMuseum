@@ -1,0 +1,101 @@
+import { expect, test, type Page } from '@playwright/test'
+
+// Fixed viewpoints, so a screenshot always frames the same thing: the seat a student starts in,
+// the window wall with its blinds and sunlight, and the board with the lesson on it.
+const VIEWS = [
+  { name: 'seat', x: 0.5, z: 1.5, yaw: 0, pitch: 0 },
+  { name: 'windows', x: 1.5, z: 1.0, yaw: Math.PI / 2 - 0.15, pitch: 90 },
+  { name: 'board', x: -1.0, z: -0.6, yaw: 0.15, pitch: 40 },
+]
+
+/** Places the camera through the player store and lets a few frames render. */
+async function look(page: Page, view: (typeof VIEWS)[number]) {
+  await page.evaluate(async (v) => {
+    const store = await import('/src/locomotion/playerStore.ts')
+    store.usePlayerStore.getState().reset([v.x, 0, v.z], v.yaw, 'standing')
+    await new Promise((done) => setTimeout(done, 200))
+    if (v.pitch !== 0) {
+      const canvas = document.querySelector('canvas')
+      canvas?.dispatchEvent(
+        new PointerEvent('pointerdown', { button: 0, clientX: 600, clientY: 400, bubbles: true }),
+      )
+      for (let i = 1; i <= 10; i++) {
+        window.dispatchEvent(
+          new PointerEvent('pointermove', {
+            clientX: 600,
+            clientY: 400 + (v.pitch * i) / 10,
+            bubbles: true,
+          }),
+        )
+      }
+      window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))
+    }
+    await new Promise((done) => setTimeout(done, 600))
+  }, view)
+}
+
+async function openClassroom(page: Page): Promise<string[]> {
+  const errors: string[] = []
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') errors.push(msg.text())
+  })
+  page.on('pageerror', (err) => errors.push(err.message))
+  await page.goto('/?stats')
+  await page.locator('canvas').waitFor()
+  // The floor and panorama textures are fetched and transcoded; give them time to land.
+  await page.waitForFunction(
+    () => (document.querySelector('canvas') as HTMLCanvasElement | null)?.width ?? 0 > 0,
+  )
+  await page.waitForTimeout(2500)
+  return errors
+}
+
+test('the classroom draws, stays inside its draw-call budget and looks unchanged', async ({
+  page,
+}) => {
+  const errors = await openClassroom(page)
+
+  // The room appears only once its KTX2 textures are transcoded, which the software renderer
+  // does at its own pace; wait for a frame that actually drew the classroom.
+  await page.waitForFunction(
+    async () => {
+      const perf = await import('/src/ui/desktop/perfStats.ts')
+      return (perf.usePerfStats.getState().stats?.triangles ?? 0) > 1000
+    },
+    undefined,
+    { timeout: 30_000 },
+  )
+  const stats = await page.evaluate(async () => {
+    const perf = await import('/src/ui/desktop/perfStats.ts')
+    return perf.usePerfStats.getState().stats
+  })
+  expect(stats, 'the performance probe reported no frame').not.toBeNull()
+  // PLAN §11: every draw call is issued twice in VR, so the room stays well under 60.
+  expect(stats?.calls ?? 999).toBeLessThan(60)
+
+  for (const view of VIEWS) {
+    await look(page, view)
+    await expect(page).toHaveScreenshot(`${view.name}.png`, { animations: 'disabled' })
+  }
+
+  expect(errors, 'the browser console reported errors').toEqual([])
+})
+
+test('the light switch and the blinds change the room', async ({ page }) => {
+  await openClassroom(page)
+  const windows = VIEWS.find((v) => v.name === 'windows')
+  if (!windows) throw new Error('the windows viewpoint is missing')
+  await look(page, windows)
+
+  const before = await page.screenshot()
+  await page.evaluate(async () => {
+    const room = await import('/src/classroom/roomStore.ts')
+    room.useRoomStore.getState().toggleLights()
+    room.useRoomStore.getState().toggleBlinds()
+  })
+  // The blinds travel for about a second and a half.
+  await page.waitForTimeout(2500)
+  const after = await page.screenshot()
+
+  expect(Buffer.compare(before, after), 'the room looked identical with the lights off').not.toBe(0)
+})

@@ -5,6 +5,7 @@ import { xrStore } from '../xr/xrStore'
 import { DesktopControls } from '../locomotion/DesktopControls'
 import { XRLocomotion } from '../locomotion/XRLocomotion'
 import { HelpOverlay } from '../ui/desktop/HelpOverlay'
+import { RoomAudio } from '../audio/RoomAudio'
 import { palette } from '../design/tokens'
 import { EnvironmentLight } from './EnvironmentLight'
 import { statsEnabled } from '../ui/desktop/perfStats'
@@ -34,6 +35,7 @@ export function Viewer({ children }: { children: ReactNode }) {
         </XR>
         {statsEnabled && <PerfProbe />}
       </Canvas>
+      <RoomAudio />
       <HelpOverlay />
       {statsEnabled && <PerfReadout />}
     </div>

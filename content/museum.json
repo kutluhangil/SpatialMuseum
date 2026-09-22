@@ -200,6 +200,12 @@
         }
       },
       {
+        "id": "ilk-gunler",
+        "title": {
+          "tr": "İlk günler"
+        }
+      },
+      {
         "id": "pozisyonlar",
         "title": {
           "tr": "Emzirme pozisyonları"
@@ -209,12 +215,6 @@
         "id": "gece",
         "title": {
           "tr": "Gece emzirmeleri"
-        }
-      },
-      {
-        "id": "ilk-gunler",
-        "title": {
-          "tr": "İlk günler"
         }
       },
       {
@@ -233,18 +233,94 @@
           "tr": "Hoş geldiniz"
         },
         "body": {
-          "tr": "Öğrenciler için örnek ders. Videolar perdede, notlar tahtada."
+          "tr": "Öğrenciler için emzirme dersi. Videolar perdede, notlar tahtada."
         }
+      },
+      {
+        "id": "ders-plani",
+        "section": "karsilama",
+        "type": "text",
+        "title": {
+          "tr": "Ders planı"
+        },
+        "body": {
+          "tr": "Dört bölüm: ilk günler, pozisyonlar, gece emzirmeleri ve sanatta annelik."
+        }
+      },
+      {
+        "id": "ilk-saat",
+        "section": "ilk-gunler",
+        "type": "text",
+        "title": {
+          "tr": "İlk saat"
+        },
+        "body": {
+          "tr": "Doğumdan sonraki ilk saatte ten tene temas, ilk emzirmeyi kolaylaştırır."
+        }
+      },
+      {
+        "id": "kolostrum",
+        "section": "ilk-gunler",
+        "type": "text",
+        "title": {
+          "tr": "Kolostrum"
+        },
+        "body": {
+          "tr": "İlk günlerin koyu sarı sütü azdır; yeni doğanın midesine yeter, bağışıklık taşır."
+        }
+      },
+      {
+        "id": "sik-emzirme",
+        "section": "ilk-gunler",
+        "type": "text",
+        "title": {
+          "tr": "Sıklık"
+        },
+        "body": {
+          "tr": "İlk haftalarda günde 8-12 kez emzirme, süt üretimini talebe göre ayarlar."
+        }
+      },
+      {
+        "id": "vid-ilk-gunler",
+        "section": "ilk-gunler",
+        "type": "video",
+        "title": {
+          "tr": "İlk günlerde emzirme"
+        },
+        "src": "videos/spike-test-pattern.mp4",
+        "poster": "posters/spike-test-pattern.jpg"
       },
       {
         "id": "pozisyonlar-giris",
         "section": "pozisyonlar",
         "type": "text",
         "title": {
-          "tr": "Emzirme pozisyonları"
+          "tr": "Dört temel pozisyon"
         },
         "body": {
-          "tr": "Örnek metin. Bu bölümde farklı emzirme pozisyonlarını göreceksiniz."
+          "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak; dördünde de sırt desteklenir."
+        }
+      },
+      {
+        "id": "kavrama",
+        "section": "pozisyonlar",
+        "type": "text",
+        "title": {
+          "tr": "Doğru kavrama"
+        },
+        "body": {
+          "tr": "Ağız areolanın çoğunu alır, alt dudak dışa döner, çene göğse değer."
+        }
+      },
+      {
+        "id": "kavrama-belirti",
+        "section": "pozisyonlar",
+        "type": "text",
+        "title": {
+          "tr": "Nasıl anlaşılır"
+        },
+        "body": {
+          "tr": "Yutkunma duyulur, meme yumuşar, emzirme ağrısızdır. Ağrı kavramayı gözden geçirtir."
         }
       },
       {
@@ -252,7 +328,7 @@
         "section": "pozisyonlar",
         "type": "video",
         "title": {
-          "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak emzirme"
+          "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak"
         },
         "src": "videos/spike-test-pattern.mp4",
         "poster": "posters/spike-test-pattern.jpg"
@@ -265,7 +341,18 @@
           "tr": "Gece emzirmeleri"
         },
         "body": {
-          "tr": "Örnek metin. Gece beslenmeleri ve uyku düzeni üzerine."
+          "tr": "Prolaktin gece daha yüksektir; gece beslenmeleri süt üretimini ayakta tutar."
+        }
+      },
+      {
+        "id": "gece-uyku",
+        "section": "gece",
+        "type": "text",
+        "title": {
+          "tr": "Güvenli uyku"
+        },
+        "body": {
+          "tr": "Bebek sırtüstü, sert ve düz bir zeminde, kendi yatağında uyutulur."
         }
       },
       {
@@ -273,28 +360,7 @@
         "section": "gece",
         "type": "video",
         "title": {
-          "tr": "Gece beslenmesi (örnek)"
-        },
-        "src": "videos/spike-test-pattern.mp4",
-        "poster": "posters/spike-test-pattern.jpg"
-      },
-      {
-        "id": "ilk-gunler-giris",
-        "section": "ilk-gunler",
-        "type": "text",
-        "title": {
-          "tr": "İlk günler"
-        },
-        "body": {
-          "tr": "Örnek metin. Doğumdan sonraki ilk günlerde emzirme."
-        }
-      },
-      {
-        "id": "vid-ilk-gunler",
-        "section": "ilk-gunler",
-        "type": "video",
-        "title": {
-          "tr": "İlk emzirme (örnek)"
+          "tr": "Gece beslenmesi"
         },
         "src": "videos/spike-test-pattern.mp4",
         "poster": "posters/spike-test-pattern.jpg"
@@ -307,7 +373,7 @@
           "tr": "Sanatta annelik"
         },
         "body": {
-          "tr": "Baskılar 1872–1894 yılları arasında annelik ve bebek bakımını resmeder."
+          "tr": "Duvardaki baskılar 1872-1894 arasında emzirmeyi ve bebek bakımını resmeder."
         }
       }
     ]

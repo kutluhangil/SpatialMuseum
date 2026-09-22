@@ -1,5 +1,5 @@
 // Fetches the CC0 Poly Haven assets the classroom ships in public/: the floor texture (AO baked
-// into the diffuse) and the outdoor panorama seen through windows. Needs ffmpeg.
+// into the diffuse) and the campus panorama seen through windows. Needs ffmpeg.
 // Textures ship as KTX2 (scripts/lib/ktx2.ts); only the compressed result lands in public/.
 // Re-running is safe: finished files are skipped.
 import { execFileSync } from 'node:child_process'
@@ -13,7 +13,12 @@ const UA = {
   'User-Agent': 'EmzirmeMuzesi/0.1 (educational hospital museum; fetch-polyhaven script)',
 }
 
-const PANORAMA = { id: 'meadow_2', out: 'public/textures/panorama-meadow-4k.ktx2', width: 4096 }
+// Lawn, path, benches and trees: what a university classroom window actually looks onto.
+const PANORAMA = {
+  id: 'charolettenbrunn_park',
+  out: 'public/textures/panorama-campus-4k.ktx2',
+  width: 4096,
+}
 // Speckled beige ceramic tiles: the hard-wearing, light floor of Turkish university classrooms.
 const FLOOR = { id: 'interior_tiles', out: 'public/textures/floor-interior-tiles-2k.ktx2' }
 

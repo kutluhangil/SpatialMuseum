@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { MuseumSchema } from '../src/schema/museum'
 import { migrateMuseum } from '../src/schema/migrate'
-import { clampStep, lessonView } from '../src/lesson/lesson'
+import { clampStep, lessonView, savedStep, sectionJump } from '../src/lesson/lesson'
 
 const { lesson } = MuseumSchema.parse(
   migrateMuseum(JSON.parse(readFileSync('content/museum.json', 'utf8'))),
@@ -13,14 +13,16 @@ describe('lessonView', () => {
     const v = lessonView(lesson, 0)
     expect(v.board?.id).toBe('ders-giris')
     expect(v.screen).toEqual({ kind: 'title', section: lesson.sections[0] })
-    expect(v.count).toBe(8)
+    expect(v.count).toBe(lesson.steps.length)
   })
 
-  it('keeps the section intro on the board while its video plays on the screen', () => {
-    const v = lessonView(lesson, 2)
+  it('keeps the last note of the section on the board while its video plays', () => {
+    const index = lesson.steps.findIndex((s) => s.id === 'vid-pozisyonlar')
+    const v = lessonView(lesson, index)
     expect(v.screen.kind).toBe('video')
     expect(v.screen.kind === 'video' && v.screen.step.id).toBe('vid-pozisyonlar')
-    expect(v.board?.id).toBe('pozisyonlar-giris')
+    expect(v.board?.id).toBe('kavrama-belirti')
+    expect(v.section.id).toBe('pozisyonlar')
   })
 
   it('clears the board when a new section starts with a video', () => {
@@ -52,7 +54,8 @@ describe('lessonView', () => {
   })
 
   it('refuses an index outside the lesson', () => {
-    expect(() => lessonView(lesson, 8)).toThrow('lesson step 8 is out of range 0..7')
+    const n = lesson.steps.length
+    expect(() => lessonView(lesson, n)).toThrow(`lesson step ${n} is out of range 0..${n - 1}`)
   })
 })
 
@@ -61,5 +64,38 @@ describe('clampStep', () => {
     expect(clampStep(0, -1, 8)).toBe(0)
     expect(clampStep(7, 1, 8)).toBe(7)
     expect(clampStep(3, 1, 8)).toBe(4)
+  })
+})
+
+describe('sectionJump', () => {
+  const ids = (i: number) => lesson.steps[i]?.id
+
+  it('moves to the first step of the next section', () => {
+    expect(ids(sectionJump(lesson, 0, 1))).toBe('ilk-saat')
+    expect(ids(sectionJump(lesson, 1, 1))).toBe('ilk-saat')
+  })
+
+  it('goes back to the start of the current section before leaving it', () => {
+    const middle = lesson.steps.findIndex((s) => s.id === 'kavrama')
+    expect(ids(sectionJump(lesson, middle, -1))).toBe('pozisyonlar-giris')
+    const start = lesson.steps.findIndex((s) => s.id === 'pozisyonlar-giris')
+    expect(ids(sectionJump(lesson, start, -1))).toBe('ilk-saat')
+  })
+
+  it('stops at the first and last section', () => {
+    expect(sectionJump(lesson, 0, -1)).toBe(0)
+    const last = lesson.steps.length - 1
+    expect(ids(sectionJump(lesson, last, 1))).toBe('sanat-giris')
+  })
+})
+
+describe('savedStep', () => {
+  it('resumes where the student left off, and starts over on anything unusable', () => {
+    expect(savedStep('5', 14)).toBe(5)
+    expect(savedStep(null, 14)).toBe(0)
+    expect(savedStep('abc', 14)).toBe(0)
+    expect(savedStep('1.5', 14)).toBe(0)
+    expect(savedStep('99', 14)).toBe(13)
+    expect(savedStep('-3', 14)).toBe(0)
   })
 })

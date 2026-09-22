@@ -2,6 +2,8 @@ import { useEffect, useMemo } from 'react'
 import type { Museum, RoomDef } from '../schema/museum'
 import { wallFrame, wallPoint, wallYaw } from '../scene/wallFrame'
 import { classroomLayout } from './layout'
+import { Blinds } from './Blinds'
+import { RoomControls } from './RoomControls'
 import { buildClassroomFurniture, buildContactShadows } from './furniture'
 import { boardGhostTexture, softShadowTexture } from '../design/proceduralTextures'
 import { lessonView } from '../lesson/lesson'
@@ -54,6 +56,8 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
           depthWrite={false}
         />
       </mesh>
+      <Blinds room={room} layout={layout} />
+      <RoomControls room={room} layout={layout} />
       {/* Old ink the eraser never took off: the board reads as used, not as a white rectangle. */}
       <mesh
         position={wallPoint(f, (b.u0 + b.u1) / 2, (b.v0 + b.v1) / 2, 0.021)}

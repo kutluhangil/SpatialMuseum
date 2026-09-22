@@ -4,7 +4,7 @@ import type { Museum } from '../schema/museum'
 import { EYE_HEIGHT } from '../locomotion/playerStore'
 import { useKTX2 } from '../media/useKTX2'
 
-const PANORAMA_URL = '/textures/panorama-meadow-4k.ktx2'
+const PANORAMA_URL = '/textures/panorama-campus-4k.ktx2'
 // Far enough that parallax between the eyes is nil (it reads as infinitely distant), well inside the camera far plane.
 const RADIUS = 90
 // Seen from a lit room, the outdoors is far brighter than any interior surface; the sky blows out
@@ -13,7 +13,7 @@ const EXPOSURE = 1.3
 const HAZE = { colour: '#E8EEF2', strength: 0.5, band: 0.3 }
 
 /**
- * The landscape outside the windows (Poly Haven meadow_2, CC0): an inside-out sphere centred at
+ * The campus outside the windows (Poly Haven charolettenbrunn_park, CC0): an inside-out sphere centred at
  * eye height so the horizon sits level with the student's eyes. Walls hide it everywhere except
  * the window openings; drawn after opaque walls, early depth test skips the hidden pixels.
  *

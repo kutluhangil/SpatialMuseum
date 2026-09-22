@@ -101,6 +101,8 @@ function place(parts: BufferGeometry[], at: Placed): BufferGeometry[] {
 }
 
 const TUBE = 0.03
+// Where a blind hangs inside the window reveal: room-side of the glazing bars, clear of the handle.
+export const BLIND_DEPTH = -0.065
 
 /** Two-person student desk: laminate top, two C-shaped steel side frames, modesty panel at the front. */
 function studentDesk(): BufferGeometry[] {
@@ -325,6 +327,8 @@ function radiatorValve(): BufferGeometry[] {
   ]
 }
 
+export type BlindFabric = { geometry: BufferGeometry; rail: number }
+
 // Notices pinned to the wall above the coat rail: a few sizes, each slightly askew.
 const PAPER = { width: 0.21, height: 0.297, tilt: 0.05 }
 const PIN_COLOURS = [palette.alarm, palette.kalemMavi, palette.kolostrum, palette.adacayi]
@@ -496,45 +500,31 @@ export function buildClassroomFurniture(room: RoomDef, layout: ClassroomLayout):
     onWall(eraserU, trayTop + 0.0025, 0.05, shadedBox(0.15, 0.005, 0.055, lit(palette.murekkep))),
   )
 
-  // Roller blinds inside the window reveals: cassette at the head, fabric part-way down, weighted
-  // bottom bar and the bead chain on the right. They sit room-side of the glazing bars.
+  // Roller blind heads and their bead chains. The fabric itself is a separate mesh that rolls up
+  // and down (`buildBlindFabric`), so it can be raised without rebuilding the whole room.
   for (const bl of layout.blinds) {
     const f = wallFrame(room, bl.wall)
     const y = wallYaw(f)
     const inner = bl.width - 0.02
-    const d = -0.065
-    parts.push(
-      onWall(bl.u, bl.top - 0.04, d, shadedBox(inner, 0.08, 0.07, lit(palette.onsut)), f, y),
-    )
-    const fabricTop = bl.top - 0.08
     parts.push(
       onWall(
         bl.u,
-        (fabricTop + bl.bottom) / 2,
-        d,
-        shadedBox(inner - 0.02, fabricTop - bl.bottom, 0.004, lit(palette.stor)),
-        f,
-        y,
-      ),
-    )
-    parts.push(
-      onWall(
-        bl.u,
-        bl.bottom,
-        d,
-        shadedBox(inner - 0.01, 0.025, 0.018, lit(palette.aluminyum)),
+        bl.top - 0.04,
+        BLIND_DEPTH,
+        shadedBox(inner, 0.08, 0.07, lit(palette.onsut)),
         f,
         y,
       ),
     )
     const chainU = bl.u + inner / 2 - 0.03
+    const chainTop = bl.top - 0.08
     const chainBottom = bl.bottom - 0.45
     parts.push(
       onWall(
         chainU,
-        (fabricTop + chainBottom) / 2,
+        (chainTop + chainBottom) / 2,
         -0.028,
-        shadedBox(0.005, fabricTop - chainBottom, 0.005, lit(palette.aluminyum)),
+        shadedBox(0.005, chainTop - chainBottom, 0.005, lit(palette.aluminyum)),
         f,
         y,
       ),
@@ -632,6 +622,42 @@ export function buildClassroomFurniture(room: RoomDef, layout: ClassroomLayout):
   parts.forEach((p) => p.dispose())
   if (!merged) throw new Error(`could not merge classroom furniture of room "${room.id}"`)
   return bakeDaylight(merged, room)
+}
+
+/**
+ * The hanging part of every roller blind (fabric and weighted bottom bar) in one geometry, with
+ * its vertices measured down from the head rail they all share. Scaling that one mesh about the
+ * rail rolls every blind up or down at once; at scale 0 it disappears into the cassettes.
+ *
+ * Windows with different head heights would need one pivot each, so that case is refused loudly
+ * rather than drawn wrong.
+ */
+export function buildBlindFabric(room: RoomDef, layout: ClassroomLayout): BlindFabric | null {
+  if (layout.blinds.length === 0) return null
+  const tops = new Set(layout.blinds.map((b) => b.top.toFixed(6)))
+  if (tops.size > 1) {
+    throw new Error(
+      `room "${room.id}" has blinds at different heights (${[...tops].join(', ')}); ` +
+        'one shared pivot cannot roll them together',
+    )
+  }
+  const rail = (layout.blinds[0]?.top ?? 0) - 0.08
+  const parts: BufferGeometry[] = []
+  for (const bl of layout.blinds) {
+    const f = wallFrame(room, bl.wall)
+    const y = wallYaw(f)
+    const inner = bl.width - 0.02
+    const drop = rail - bl.bottom
+    const at = (v: number, g: BufferGeometry) =>
+      place([g], { position: wallPoint(f, bl.u, v - rail, BLIND_DEPTH), yaw: y })[0]
+    const fabric = at(rail - drop / 2, shadedBox(inner - 0.02, drop, 0.004, lit(palette.stor)))
+    const bar = at(bl.bottom, shadedBox(inner - 0.01, 0.025, 0.018, lit(palette.aluminyum)))
+    for (const g of [fabric, bar]) if (g) parts.push(g)
+  }
+  const merged = mergeGeometries(parts)
+  parts.forEach((p) => p.dispose())
+  if (!merged) throw new Error(`could not merge blinds of room "${room.id}"`)
+  return { geometry: bakeDaylight(merged, room), rail }
 }
 
 /** Soft floor quad centred under a footprint, turned by `yaw`; the texture's dark core is ~60 %. */

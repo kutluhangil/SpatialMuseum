@@ -5,6 +5,9 @@ import { useLessonStore } from './lessonStore'
 
 const NEXT_KEYS = new Set(['KeyN', 'Space'])
 const PREV_KEYS = new Set(['KeyB'])
+// Chapter keys: skip a whole section at a time, as on a video player.
+const NEXT_SECTION_KEYS = new Set(['BracketRight'])
+const PREV_SECTION_KEYS = new Set(['BracketLeft'])
 
 /** Controller buttons report a state every frame, not events: act on the press edge only. */
 function ControllerButtons() {
@@ -30,6 +33,7 @@ function ControllerButtons() {
 
 export function LessonControls() {
   const go = useLessonStore((s) => s.go)
+  const goSection = useLessonStore((s) => s.goSection)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat) return
@@ -37,9 +41,11 @@ export function LessonControls() {
         e.preventDefault()
         go(1)
       } else if (PREV_KEYS.has(e.code)) go(-1)
+      else if (NEXT_SECTION_KEYS.has(e.code)) goSection(1)
+      else if (PREV_SECTION_KEYS.has(e.code)) goSection(-1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [go])
+  }, [go, goSection])
   return <ControllerButtons />
 }

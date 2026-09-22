@@ -14,10 +14,12 @@
     "validate": "node --experimental-strip-types scripts/validate-content.ts",
     "media:spike": "bash scripts/make-test-video.sh",
     "media:artworks": "node scripts/fetch-artworks.ts",
-    "media:polyhaven": "node scripts/fetch-polyhaven.ts"
+    "media:polyhaven": "node scripts/fetch-polyhaven.ts",
+    "test:visual": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "4.3.3",
     "@types/node": "26.6.2",
     "@types/react": "19.2.18",
