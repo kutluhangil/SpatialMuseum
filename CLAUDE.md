@@ -28,6 +28,10 @@ reduced-motion, ≥ 7:1 metin kontrastı.
 - Draw call bütçesi: klasik WebGLRenderer'da multiview yok; VR'da her draw call iki kez çizilir. Yeni görsel öğe eklerken oda başına birleştir (merge) ve `?stats` ile ölç. İki kapı ötesindeki odalar `detail: 'far'` (tek derslikte etkisiz).
 - Sınıf mobilyası `src/classroom/layout.ts` (saf yerleşim) + `furniture.ts` (tek birleşik mesh); yeni parça oraya eklenir.
 - Sınıftaki izleyici kitlesi öğrenciler (proje başındaki "anneler" kurgusu geçersiz); metinler öğrencilere hitap eder.
+- Taban cihaz Meta Quest 2 (`docs/decisions/0006-quest2.md`). Kalite profili `src/xr/device.ts`;
+  yeni saydam katman eklerken Quest 2'de kapatılabilir olmalı ve `?stats` ile ölçülmeli.
+- Metinler iki dilli: içerik `Localized` (`tr` zorunlu, `en` opsiyonel), arayüz `src/i18n/strings.ts`.
+  Bileşenler `useText()` / `useUI()` kullanır; doğrudan `.tr` okunmaz.
 - Ses `src/audio/` içinde WebAudio ile üretilir; ses dosyası eklenmez. Ses ilk kullanıcı hareketinde başlar.
 - Oda durumu (ışık, perde) `src/classroom/roomStore.ts`; perde kumaşı ayrı mesh (`buildBlindFabric`) ve kaset/zincir birleşik mobilyada kalır.
 - Görsel regresyon: `npm run test:visual` (Playwright, `tests-visual/`). Referans görüntüler bu makinede üretildi; bilinçli görsel değişiklikten sonra `-- --update-snapshots` ile yenilenir.

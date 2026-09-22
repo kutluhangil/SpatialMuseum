@@ -14,7 +14,8 @@
     {
       "id": "derslik",
       "name": {
-        "tr": "Derslik"
+        "tr": "Derslik",
+        "en": "Lecture room"
       },
       "rect": {
         "x": -4.8,
@@ -77,10 +78,12 @@
       "frame": "black",
       "label": {
         "title": {
-          "tr": "Beşik"
+          "tr": "Beşik",
+          "en": "The Cradle"
         },
         "body": {
-          "tr": "Berthe Morisot · 1872"
+          "tr": "Berthe Morisot · 1872",
+          "en": "Berthe Morisot · 1872"
         }
       }
     },
@@ -99,10 +102,12 @@
       "frame": "black",
       "label": {
         "title": {
-          "tr": "Anne ve Çocuk"
+          "tr": "Anne ve Çocuk",
+          "en": "Mother and Child"
         },
         "body": {
-          "tr": "Mary Cassatt · 1884–1894"
+          "tr": "Mary Cassatt · 1884–1894",
+          "en": "Mary Cassatt · 1884–1894"
         }
       }
     },
@@ -121,10 +126,12 @@
       "frame": "black",
       "label": {
         "title": {
-          "tr": "Çocuğunu Emziren Anne"
+          "tr": "Çocuğunu Emziren Anne",
+          "en": "Mother Nursing Her Child"
         },
         "body": {
-          "tr": "Pierre-Auguste Renoir · 1885"
+          "tr": "Pierre-Auguste Renoir · 1885",
+          "en": "Pierre-Auguste Renoir · 1886"
         }
       }
     },
@@ -143,10 +150,12 @@
       "frame": "black",
       "label": {
         "title": {
-          "tr": "Anne Şefkati"
+          "tr": "Anne Şefkati",
+          "en": "Maternal Caress"
         },
         "body": {
-          "tr": "Mary Cassatt · y. 1891"
+          "tr": "Mary Cassatt · y. 1891",
+          "en": "Mary Cassatt · c. 1891"
         }
       }
     },
@@ -164,10 +173,12 @@
       },
       "aspect": 1.2,
       "title": {
-        "tr": "Biliyor muydunuz?"
+        "tr": "Biliyor muydunuz?",
+        "en": "Did you know?"
       },
       "body": {
-        "tr": "Örnek metin. Buraya kısa bir bilgi notu gelecek."
+        "tr": "Örnek metin. Buraya kısa bir bilgi notu gelecek.",
+        "en": "Sample text. A short note will go here."
       }
     },
     {
@@ -184,10 +195,12 @@
       },
       "aspect": 1.2,
       "title": {
-        "tr": "Kamu malı eserler"
+        "tr": "Kamu malı eserler",
+        "en": "Public domain works"
       },
       "body": {
-        "tr": "Duvardaki baskılar Wikimedia Commons'tan, kamu malı ya da CC0 lisanslı kopyalardır."
+        "tr": "Duvardaki baskılar Wikimedia Commons'tan, kamu malı ya da CC0 lisanslı kopyalardır.",
+        "en": "The prints on the walls are public domain or CC0 copies from Wikimedia Commons."
       }
     }
   ],
@@ -196,31 +209,36 @@
       {
         "id": "karsilama",
         "title": {
-          "tr": "Hoş geldiniz"
+          "tr": "Hoş geldiniz",
+          "en": "Welcome"
         }
       },
       {
         "id": "ilk-gunler",
         "title": {
-          "tr": "İlk günler"
+          "tr": "İlk günler",
+          "en": "The first days"
         }
       },
       {
         "id": "pozisyonlar",
         "title": {
-          "tr": "Emzirme pozisyonları"
+          "tr": "Emzirme pozisyonları",
+          "en": "Positions and latch"
         }
       },
       {
         "id": "gece",
         "title": {
-          "tr": "Gece emzirmeleri"
+          "tr": "Gece emzirmeleri",
+          "en": "Night feeds"
         }
       },
       {
         "id": "sanat",
         "title": {
-          "tr": "Sanatta annelik"
+          "tr": "Sanatta annelik",
+          "en": "Motherhood in art"
         }
       }
     ],
@@ -230,10 +248,12 @@
         "section": "karsilama",
         "type": "text",
         "title": {
-          "tr": "Hoş geldiniz"
+          "tr": "Hoş geldiniz",
+          "en": "Welcome"
         },
         "body": {
-          "tr": "Öğrenciler için emzirme dersi. Videolar perdede, notlar tahtada."
+          "tr": "Öğrenciler için emzirme dersi. Videolar perdede, notlar tahtada.",
+          "en": "A breastfeeding class for students. Videos on the screen, notes on the board."
         }
       },
       {
@@ -241,10 +261,12 @@
         "section": "karsilama",
         "type": "text",
         "title": {
-          "tr": "Ders planı"
+          "tr": "Ders planı",
+          "en": "The plan"
         },
         "body": {
-          "tr": "Dört bölüm: ilk günler, pozisyonlar, gece emzirmeleri ve sanatta annelik."
+          "tr": "Dört bölüm: ilk günler, pozisyonlar, gece emzirmeleri ve sanatta annelik.",
+          "en": "Four sections: the first days, positions, night feeds and motherhood in art."
         }
       },
       {
@@ -252,10 +274,12 @@
         "section": "ilk-gunler",
         "type": "text",
         "title": {
-          "tr": "İlk saat"
+          "tr": "İlk saat",
+          "en": "The first hour"
         },
         "body": {
-          "tr": "Doğumdan sonraki ilk saatte ten tene temas, ilk emzirmeyi kolaylaştırır."
+          "tr": "Doğumdan sonraki ilk saatte ten tene temas, ilk emzirmeyi kolaylaştırır.",
+          "en": "Skin to skin in the first hour after birth makes the first feed easier."
         }
       },
       {
@@ -263,10 +287,12 @@
         "section": "ilk-gunler",
         "type": "text",
         "title": {
-          "tr": "Kolostrum"
+          "tr": "Kolostrum",
+          "en": "Colostrum"
         },
         "body": {
-          "tr": "İlk günlerin koyu sarı sütü azdır; yeni doğanın midesine yeter, bağışıklık taşır."
+          "tr": "İlk günlerin koyu sarı sütü azdır; yeni doğanın midesine yeter, bağışıklık taşır.",
+          "en": "The first days' thick yellow milk is small in volume; it suits a newborn's stomach."
         }
       },
       {
@@ -274,10 +300,12 @@
         "section": "ilk-gunler",
         "type": "text",
         "title": {
-          "tr": "Sıklık"
+          "tr": "Sıklık",
+          "en": "How often"
         },
         "body": {
-          "tr": "İlk haftalarda günde 8-12 kez emzirme, süt üretimini talebe göre ayarlar."
+          "tr": "İlk haftalarda günde 8-12 kez emzirme, süt üretimini talebe göre ayarlar.",
+          "en": "Eight to twelve feeds a day in the early weeks sets supply to the baby’s demand."
         }
       },
       {
@@ -285,7 +313,8 @@
         "section": "ilk-gunler",
         "type": "video",
         "title": {
-          "tr": "İlk günlerde emzirme"
+          "tr": "İlk günlerde emzirme",
+          "en": "Breastfeeding in the first days"
         },
         "src": "videos/spike-test-pattern.mp4",
         "poster": "posters/spike-test-pattern.jpg"
@@ -295,10 +324,12 @@
         "section": "pozisyonlar",
         "type": "text",
         "title": {
-          "tr": "Dört temel pozisyon"
+          "tr": "Dört temel pozisyon",
+          "en": "Four basic positions"
         },
         "body": {
-          "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak; dördünde de sırt desteklenir."
+          "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak; dördünde de sırt desteklenir.",
+          "en": "Cradle, cross-cradle, football and side-lying; all four support the back."
         }
       },
       {
@@ -306,10 +337,12 @@
         "section": "pozisyonlar",
         "type": "text",
         "title": {
-          "tr": "Doğru kavrama"
+          "tr": "Doğru kavrama",
+          "en": "A good latch"
         },
         "body": {
-          "tr": "Ağız areolanın çoğunu alır, alt dudak dışa döner, çene göğse değer."
+          "tr": "Ağız areolanın çoğunu alır, alt dudak dışa döner, çene göğse değer.",
+          "en": "The mouth takes most of the areola, the lower lip turns out, the chin touches the breast."
         }
       },
       {
@@ -317,10 +350,12 @@
         "section": "pozisyonlar",
         "type": "text",
         "title": {
-          "tr": "Nasıl anlaşılır"
+          "tr": "Nasıl anlaşılır",
+          "en": "How to tell"
         },
         "body": {
-          "tr": "Yutkunma duyulur, meme yumuşar, emzirme ağrısızdır. Ağrı kavramayı gözden geçirtir."
+          "tr": "Yutkunma duyulur, meme yumuşar, emzirme ağrısızdır. Ağrı kavramayı gözden geçirtir.",
+          "en": "Swallowing is audible, the breast softens, feeding does not hurt."
         }
       },
       {
@@ -328,7 +363,8 @@
         "section": "pozisyonlar",
         "type": "video",
         "title": {
-          "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak"
+          "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak",
+          "en": "Cradle, cross-cradle, football and side-lying"
         },
         "src": "videos/spike-test-pattern.mp4",
         "poster": "posters/spike-test-pattern.jpg"
@@ -338,10 +374,12 @@
         "section": "gece",
         "type": "text",
         "title": {
-          "tr": "Gece emzirmeleri"
+          "tr": "Gece emzirmeleri",
+          "en": "Night feeds"
         },
         "body": {
-          "tr": "Prolaktin gece daha yüksektir; gece beslenmeleri süt üretimini ayakta tutar."
+          "tr": "Prolaktin gece daha yüksektir; gece beslenmeleri süt üretimini ayakta tutar.",
+          "en": "Prolactin is higher at night; night feeds are what keep supply up."
         }
       },
       {
@@ -349,10 +387,12 @@
         "section": "gece",
         "type": "text",
         "title": {
-          "tr": "Güvenli uyku"
+          "tr": "Güvenli uyku",
+          "en": "Safe sleep"
         },
         "body": {
-          "tr": "Bebek sırtüstü, sert ve düz bir zeminde, kendi yatağında uyutulur."
+          "tr": "Bebek sırtüstü, sert ve düz bir zeminde, kendi yatağında uyutulur.",
+          "en": "The baby sleeps on its back, on a firm flat surface, in its own bed."
         }
       },
       {
@@ -360,7 +400,8 @@
         "section": "gece",
         "type": "video",
         "title": {
-          "tr": "Gece beslenmesi"
+          "tr": "Gece beslenmesi",
+          "en": "A night feed"
         },
         "src": "videos/spike-test-pattern.mp4",
         "poster": "posters/spike-test-pattern.jpg"
@@ -370,10 +411,12 @@
         "section": "sanat",
         "type": "text",
         "title": {
-          "tr": "Sanatta annelik"
+          "tr": "Sanatta annelik",
+          "en": "Motherhood in art"
         },
         "body": {
-          "tr": "Duvardaki baskılar 1872-1894 arasında emzirmeyi ve bebek bakımını resmeder."
+          "tr": "Duvardaki baskılar 1872-1894 arasında emzirmeyi ve bebek bakımını resmeder.",
+          "en": "The prints on the wall depict breastfeeding and infant care between 1872 and 1894."
         }
       }
     ]

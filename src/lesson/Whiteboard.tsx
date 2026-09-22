@@ -3,6 +3,7 @@ import type { LessonTextDef } from '../schema/museum'
 import type { WallArea } from '../classroom/layout'
 import { palette } from '../design/tokens'
 import { fontUrls, textSizes } from '../design/typography'
+import { useText } from '../i18n/localeStore'
 
 // Read from the back half of the room; the spawn seat is ~5 m from the board.
 export const BOARD_VIEW_DISTANCE = 5
@@ -10,6 +11,7 @@ const PAD = 0.12
 
 /** Lesson notes written on the whiteboard: ink on white keeps the 7:1 contrast with no card behind. */
 export function Whiteboard({ area, note }: { area: WallArea; note: LessonTextDef | null }) {
+  const t = useText()
   if (!note) return null
   const size = textSizes(BOARD_VIEW_DISTANCE)
   const width = area.u1 - area.u0 - PAD * 2
@@ -24,7 +26,7 @@ export function Whiteboard({ area, note }: { area: WallArea; note: LessonTextDef
           anchorY="top"
           maxWidth={width}
         >
-          {note.title.tr}
+          {t(note.title)}
         </Text>
       )}
       <Text
@@ -37,7 +39,7 @@ export function Whiteboard({ area, note }: { area: WallArea; note: LessonTextDef
         position-y={note.title ? -size.title * 1.35 : 0}
         maxWidth={width}
       >
-        {note.body.tr}
+        {t(note.body)}
       </Text>
     </group>
   )

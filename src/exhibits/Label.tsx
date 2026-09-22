@@ -1,6 +1,7 @@
 import { Text } from '@react-three/drei'
 import type { ExhibitDef } from '../schema/museum'
 import { palette } from '../design/tokens'
+import { useText } from '../i18n/localeStore'
 import { useCardGeometry } from './useCardGeometry'
 import { useBlockHeight } from './useBlockHeight'
 import { EXHIBIT_VIEW_DISTANCE, fontUrls, textSizes } from '../design/typography'
@@ -24,6 +25,7 @@ export function Label({
   width: number
   exhibitHeight: number
 }) {
+  const t = useText()
   const width = Math.max(exhibitWidth, MIN_WIDTH)
   const size = textSizes(EXHIBIT_VIEW_DISTANCE)
   const [titleH, onTitleSync] = useBlockHeight()
@@ -52,7 +54,7 @@ export function Label({
         maxWidth={inner}
         onSync={onTitleSync}
       >
-        {label.title.tr}
+        {t(label.title)}
       </Text>
       {label.body && (
         <Text
@@ -66,7 +68,7 @@ export function Label({
           maxWidth={inner}
           onSync={onBodySync}
         >
-          {label.body.tr}
+          {t(label.body)}
         </Text>
       )}
     </group>

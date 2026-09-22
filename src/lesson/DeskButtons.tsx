@@ -4,6 +4,7 @@ import type { ThreeEvent } from '@react-three/fiber'
 import { palette } from '../design/tokens'
 import { fontUrls } from '../design/typography'
 import { useLessonStore } from './lessonStore'
+import { useUI } from '../i18n/strings'
 
 // 16 × 7 cm at ~0.6 m from a seated eye: well over the 44 px touch-target equivalent.
 const BUTTON = { w: 0.16, h: 0.07 }
@@ -57,6 +58,7 @@ function DeskButton({
 
 /** Previous / Next on a small stand on the visitor's desk, tilted towards a seated eye. */
 export function DeskButtons({ count }: { count: number }) {
+  const t = useUI()
   const index = useLessonStore((s) => s.index)
   const go = useLessonStore((s) => s.go)
   return (
@@ -65,10 +67,10 @@ export function DeskButtons({ count }: { count: number }) {
         <planeGeometry args={[0.42, 0.11]} />
         <meshBasicMaterial color={palette.murekkep} />
       </mesh>
-      <DeskButton x={-0.095} label="‹ Önceki" onPress={() => go(-1)} disabled={index === 0} />
+      <DeskButton x={-0.095} label={t('previous')} onPress={() => go(-1)} disabled={index === 0} />
       <DeskButton
         x={0.095}
-        label="Sonraki ›"
+        label={t('next')}
         onPress={() => go(1)}
         disabled={index === count - 1}
       />

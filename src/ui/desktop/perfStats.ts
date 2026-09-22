@@ -1,6 +1,13 @@
 import { create } from 'zustand'
 
-export type RenderStats = { calls: number; triangles: number; geometries: number; textures: number }
+export type RenderStats = {
+  calls: number
+  triangles: number
+  geometries: number
+  textures: number
+  /** Frames per second over the sampling window: the number that decides comfort in a headset. */
+  fps: number
+}
 
 export const usePerfStats = create<{ stats: RenderStats | null; set: (s: RenderStats) => void }>(
   (set) => ({

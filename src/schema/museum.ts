@@ -29,6 +29,7 @@ export const CLASSROOM_FRONT_LENGTH =
   CLASSROOM.screen.margin
 
 const Localized = z.object({ tr: z.string().min(1), en: z.string().optional() })
+export type Localized = z.infer<typeof Localized>
 const WallSide = z.enum(['north', 'east', 'south', 'west'])
 
 const Door = z.object({

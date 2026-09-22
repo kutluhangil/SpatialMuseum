@@ -1,6 +1,7 @@
 import { Text } from '@react-three/drei'
 import type { ExhibitDef } from '../schema/museum'
 import { palette } from '../design/tokens'
+import { useText } from '../i18n/localeStore'
 import { useCardGeometry } from './useCardGeometry'
 import { useBlockHeight } from './useBlockHeight'
 import { EXHIBIT_VIEW_DISTANCE, fontUrls, textSizes } from '../design/typography'
@@ -16,6 +17,7 @@ export function TextPanel({
   exhibit: TextExhibit
   withText?: boolean
 }) {
+  const t = useText()
   const width = exhibit.placement.width
   const height = width / exhibit.aspect
   const size = textSizes(EXHIBIT_VIEW_DISTANCE)
@@ -48,7 +50,7 @@ export function TextPanel({
               maxWidth={inner}
               onSync={onTitleSync}
             >
-              {exhibit.title.tr}
+              {t(exhibit.title)}
             </Text>
           )}
           <Text
@@ -61,7 +63,7 @@ export function TextPanel({
             position-y={exhibit.title ? -titleH - size.title * 0.4 : 0}
             maxWidth={inner}
           >
-            {exhibit.body.tr}
+            {t(exhibit.body)}
           </Text>
         </group>
       )}

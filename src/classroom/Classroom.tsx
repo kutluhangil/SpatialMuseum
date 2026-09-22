@@ -6,6 +6,10 @@ import { Blinds } from './Blinds'
 import { RoomControls } from './RoomControls'
 import { buildClassroomFurniture, buildContactShadows } from './furniture'
 import { boardGhostTexture, softShadowTexture } from '../design/proceduralTextures'
+import { quality } from '../xr/device'
+import { useText } from '../i18n/localeStore'
+import { statsEnabled } from '../ui/desktop/perfStats'
+import { XRPerfPanel } from '../ui/XRPerfPanel'
 import { lessonView } from '../lesson/lesson'
 import { useLessonStore } from '../lesson/lessonStore'
 import { Whiteboard } from '../lesson/Whiteboard'
@@ -21,6 +25,7 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
   useEffect(() => () => furniture.dispose(), [furniture])
   const shadows = useMemo(() => buildContactShadows(room, layout), [room, layout])
   useEffect(() => () => shadows.dispose(), [shadows])
+  const t = useText()
   const index = useLessonStore((s) => s.index)
   const hasLesson = museum.lesson.steps.length > 0
   const view = hasLesson ? lessonView(museum.lesson, index) : null
@@ -57,16 +62,21 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
         />
       </mesh>
       <Blinds room={room} layout={layout} />
+      {statsEnabled && (
+        <XRPerfPanel position={[...wallPoint(f, (b.u0 + b.u1) / 2, 0.55, 0.02)]} rotationY={yaw} />
+      )}
       <RoomControls room={room} layout={layout} />
       {/* Old ink the eraser never took off: the board reads as used, not as a white rectangle. */}
-      <mesh
-        position={wallPoint(f, (b.u0 + b.u1) / 2, (b.v0 + b.v1) / 2, 0.021)}
-        rotation-y={yaw}
-        renderOrder={1}
-      >
-        <planeGeometry args={[b.u1 - b.u0 - 0.04, b.v1 - b.v0 - 0.04]} />
-        <meshBasicMaterial map={boardGhostTexture()} transparent depthWrite={false} />
-      </mesh>
+      {quality.boardGhost && (
+        <mesh
+          position={wallPoint(f, (b.u0 + b.u1) / 2, (b.v0 + b.v1) / 2, 0.021)}
+          rotation-y={yaw}
+          renderOrder={1}
+        >
+          <planeGeometry args={[b.u1 - b.u0 - 0.04, b.v1 - b.v0 - 0.04]} />
+          <meshBasicMaterial map={boardGhostTexture()} transparent depthWrite={false} />
+        </mesh>
+      )}
       {view && (
         <>
           <group
@@ -79,7 +89,7 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
             position={wallPoint(f, (s.u0 + s.u1) / 2, (s.v0 + s.v1) / 2, s.standoff + 0.004)}
             rotation-y={yaw}
           >
-            <ProjectionScreen area={s} content={view.screen} title={museum.title.tr} />
+            <ProjectionScreen area={s} content={view.screen} title={t(museum.title)} />
           </group>
           <group position={buttonsAt} rotation-y={yaw}>
             <DeskButtons count={view.count} />

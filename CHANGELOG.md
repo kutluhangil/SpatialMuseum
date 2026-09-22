@@ -3,6 +3,10 @@
 Newest entries at the top.
 
 ## 2026-09-23
+- Meta Quest 2 is now the baseline device: quality profiles per headset (framebuffer scale, foveation, target frame rate, anisotropy), the two decorative transparent passes switched off there, and a `?stats` panel on the wall so the headset can be calibrated from inside it (ADR `docs/decisions/0006-quest2.md`).
+- Teleporting blinks to black for a tenth of a second, which is what keeps a jump cut comfortable.
+- English throughout: lesson, sections, painting labels and interface, chosen by `?lang=en`, a switch in the corner or the browser's language, and remembered.
+- A loading screen with real progress, and the playing video's title written under the screen.
 - Real lesson: four sections and fourteen steps of breastfeeding teaching (first days, positions and latch, night feeds, art), written for students. Draft content — a lactation consultant should review it before any class uses it.
 - The lesson resumes where the student left off (localStorage, guarded), and `[` / `]` jump whole sections.
 - Sound: a procedural room tone and step clicks built in WebAudio (no audio files), started on the first gesture, with a switch in the corner that is remembered.

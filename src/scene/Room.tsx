@@ -28,6 +28,7 @@ import { FLOOR_TILE_METRES, buildCeiling, buildCeilingPanels, buildFloor } from 
 import { floorSheen } from './floorSheen'
 import { roomBlinds } from '../classroom/layout'
 import { useRoomStore } from '../classroom/roomStore'
+import { quality } from '../xr/device'
 
 const FLOOR_URL = '/textures/floor-interior-tiles-2k.ktx2'
 
@@ -80,7 +81,7 @@ export function Room({ room, exhibits }: RoomProps) {
     return buildSunPatches(room, covered)
   }, [room, blindsDown])
   const glass = useMemo(() => buildWindowGlass(room), [room])
-  const glare = useMemo(() => buildWindowGlare(room), [room])
+  const glare = useMemo(() => (quality.floorGlare ? buildWindowGlare(room) : null), [room])
   const shadows = useMemo(() => buildFrameShadows(room, exhibits), [room, exhibits])
   useEffect(
     () => () => {
@@ -91,7 +92,10 @@ export function Room({ room, exhibits }: RoomProps) {
     [walls, trim, floor, ceiling, panels, sun, glass, glare, shadows],
   )
 
-  const maxAnisotropy = useThree((s) => s.gl.capabilities.getMaxAnisotropy())
+  // Anisotropy is capped per device: a Quest 2 spends that bandwidth better elsewhere.
+  const maxAnisotropy = useThree((s) =>
+    Math.min(quality.anisotropy, s.gl.capabilities.getMaxAnisotropy()),
+  )
   const floorMap = useKTX2(FLOOR_URL, (t) => configureFloor(t, maxAnisotropy))
   const teleport = usePlayerStore((s) => s.teleport)
   const wallMap = useMemo(() => {
