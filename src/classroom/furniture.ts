@@ -107,7 +107,12 @@ function studentDesk(): BufferGeometry[] {
   const { width, depth, height } = CLASSROOM.desk
   const top = lit(palette.laminat)
   const steel = lit(palette.metal)
-  const out = [part(shadedBox(width, 0.025, depth, top), 0, height - 0.0125, 0)]
+  // ABS edge band under the laminate: the darker rim every school desk has.
+  const band = top.clone().multiplyScalar(0.72)
+  const out = [
+    part(shadedBox(width, 0.025, depth, top), 0, height - 0.0125, 0),
+    part(shadedBox(width + 0.006, 0.014, depth + 0.006, band), 0, height - 0.032, 0),
+  ]
   for (const x of [-width / 2 + 0.05, width / 2 - 0.05]) {
     out.push(
       part(
@@ -138,9 +143,13 @@ function studentChair(): BufferGeometry[] {
   const d = 0.42
   // Positive tilt about X leans the back away from the sitter (towards local +Z, the room's back).
   const recline = 0.12
+  // A darker rim under the seat and behind the back: moulded plastic reads thicker than a slab.
+  const rim = shell.clone().multiplyScalar(0.74)
   const out = [
     part(shadedBox(w, 0.03, d, shell), 0, seatH, 0),
+    part(shadedBox(w - 0.03, 0.016, d - 0.03, rim), 0, seatH - 0.022, 0),
     part(shadedBox(w, 0.3, 0.025, shell), 0, seatH + 0.3, d / 2 + 0.02, recline),
+    part(shadedBox(w - 0.03, 0.27, 0.014, rim), 0, seatH + 0.3, d / 2 + 0.036, recline),
   ]
   for (const x of [-w / 2 + 0.03, w / 2 - 0.03]) {
     for (const z of [-d / 2 + 0.03, d / 2 - 0.03]) {

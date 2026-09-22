@@ -34,6 +34,8 @@ const BASEBOARD_DEPTH = 0.018
 export const CHAIR_RAIL = { bottom: 0.88, top: 0.94, depth: 0.018 }
 const CEILING_ANGLE = { height: 0.03, depth: 0.02 }
 const WINDOW = { reveal: 0.25, casing: 0.06, casingDepth: 0.04, sillDepth: 0.12, bar: 0.045 }
+// How far a window's reflection reaches into the room, and how much wider than the window it is.
+const GLARE = { reach: 2.6, spread: 1.15 }
 
 // Fake key light from the north-east: each wall orientation gets a fixed brightness so corners
 // stay readable without runtime lighting (PLAN §8.4, "baked light at zero cost").
@@ -95,6 +97,7 @@ export function quad(
   d: Vec3,
   normal: Vec3,
   colors?: [Color, Color, Color, Color],
+  uvs?: [number, number, number, number, number, number, number, number],
 ): BufferGeometry {
   const g = new BufferGeometry()
   g.setAttribute('position', new Float32BufferAttribute([...a, ...b, ...c, ...d], 3))
@@ -111,6 +114,7 @@ export function quad(
       ),
     )
   }
+  if (uvs) g.setAttribute('uv', new Float32BufferAttribute(uvs, 2))
   const facesNormal = dot(cross(sub(b, a), sub(c, a)), normal) >= 0
   g.setIndex(facesNormal ? [0, 1, 2, 0, 2, 3] : [0, 2, 1, 0, 3, 2])
   return g
@@ -156,6 +160,7 @@ function subdividedWall(
         const [wx, , wz] = wallPoint(frame, u, v)
         return shadeColor(tone, u, v, L, height).multiplyScalar(daylight(room, wx, wz, side))
       }
+      // UVs run in metres along the wall and up it, so the plaster never stretches or tiles twice.
       parts.push(
         quad(
           wallPoint(frame, u0, v0),
@@ -164,6 +169,7 @@ function subdividedWall(
           wallPoint(frame, u0, v1),
           frame.normal,
           [c(u0, v0), c(u1, v0), c(u1, v1), c(u0, v1)],
+          [u0, v0, u1, v0, u1, v1, u0, v1],
         ),
       )
     }
@@ -545,6 +551,36 @@ export function buildSunPatches(room: RoomDef, covered: number[] = []): BufferGe
   }
   if (parts.length === 0) return null
   return merge(parts, `sun patches of room "${room.id}"`)
+}
+
+/**
+ * Reflections of the windows in the polished floor: one smear per window, lying against its wall
+ * and stretching into the room. Additive and flat, where a real mirror would draw the room twice.
+ */
+export function buildWindowGlare(room: RoomDef): BufferGeometry | null {
+  const parts: BufferGeometry[] = []
+  const y = 0.006
+  for (const win of room.windows) {
+    const f = wallFrame(room, win.wall)
+    const half = (win.width * GLARE.spread) / 2
+    const u0 = win.offset - half
+    const u1 = win.offset + half
+    const far = GLARE.reach
+    // Corner order puts the bright end of the texture (v = 1) against the wall.
+    parts.push(
+      withUv(
+        quad(
+          wallPoint(f, u0, y, far),
+          wallPoint(f, u1, y, far),
+          wallPoint(f, u1, y, 0.02),
+          wallPoint(f, u0, y, 0.02),
+          [0, 1, 0],
+        ),
+      ),
+    )
+  }
+  if (parts.length === 0) return null
+  return merge(parts, `window glare of room "${room.id}"`)
 }
 
 /** Soft drop shadows behind every framed painting in the room, merged into one mesh. */

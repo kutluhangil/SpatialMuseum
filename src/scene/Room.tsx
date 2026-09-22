@@ -6,7 +6,9 @@ import type { ExhibitDef, RoomDef } from '../schema/museum'
 import { palette } from '../design/tokens'
 import {
   ceilingTileTexture,
+  floorGlareTexture,
   glassTexture,
+  plasterTexture,
   softShadowTexture,
   sunPatchTexture,
 } from '../design/proceduralTextures'
@@ -19,6 +21,7 @@ import {
   buildRoomTrim,
   buildRoomWalls,
   buildSunPatches,
+  buildWindowGlare,
   buildWindowGlass,
 } from './WallBuilder'
 import { FLOOR_TILE_METRES, buildCeiling, buildCeilingPanels, buildFloor } from './Surfaces'
@@ -37,7 +40,7 @@ function configureFloor(tex: Texture, maxAnisotropy: number) {
   tex.wrapS = RepeatWrapping
   tex.wrapT = RepeatWrapping
   // Floors are seen at grazing angles; without anisotropy the texture smears into mush.
-  tex.anisotropy = Math.min(8, maxAnisotropy)
+  tex.anisotropy = maxAnisotropy
 }
 
 type RoomProps = {
@@ -71,21 +74,30 @@ export function Room({ room, exhibits }: RoomProps) {
     return buildSunPatches(room, covered)
   }, [room])
   const glass = useMemo(() => buildWindowGlass(room), [room])
+  const glare = useMemo(() => buildWindowGlare(room), [room])
   const shadows = useMemo(() => buildFrameShadows(room, exhibits), [room, exhibits])
   useEffect(
     () => () => {
-      for (const g of [walls, trim, floor, ceiling, panels, sun, glass, shadows]) g?.dispose()
+      for (const g of [walls, trim, floor, ceiling, panels, sun, glass, glare, shadows]) {
+        g?.dispose()
+      }
     },
-    [walls, trim, floor, ceiling, panels, sun, glass, shadows],
+    [walls, trim, floor, ceiling, panels, sun, glass, glare, shadows],
   )
 
   const maxAnisotropy = useThree((s) => s.gl.capabilities.getMaxAnisotropy())
   const floorMap = useKTX2(FLOOR_URL, (t) => configureFloor(t, maxAnisotropy))
   const teleport = usePlayerStore((s) => s.teleport)
+  const wallMap = useMemo(() => {
+    const t = plasterTexture()
+    // The walls are read at a glance from across the room; anisotropy keeps the grain from smearing.
+    t.anisotropy = maxAnisotropy
+    return t
+  }, [maxAnisotropy])
   const ceilingMap = useMemo(() => {
     const t = ceilingTileTexture()
     // Ceiling tiles are seen at grazing angles from a seat, like the floor.
-    t.anisotropy = Math.min(8, maxAnisotropy)
+    t.anisotropy = maxAnisotropy
     return t
   }, [maxAnisotropy])
 
@@ -93,7 +105,7 @@ export function Room({ room, exhibits }: RoomProps) {
     <group name={`room:${room.id}`}>
       {/* Unlit: light is baked into vertex colours (PLAN §8.4), which also keeps Quest fill cost low. */}
       <mesh geometry={walls}>
-        <meshBasicMaterial vertexColors />
+        <meshBasicMaterial map={wallMap} vertexColors />
       </mesh>
       <mesh geometry={trim}>
         <meshBasicMaterial vertexColors />
@@ -144,6 +156,19 @@ export function Room({ room, exhibits }: RoomProps) {
             transparent
             depthWrite={false}
             toneMapped={false}
+          />
+        </mesh>
+      )}
+      {glare && (
+        // The floor's reflection of the window: under the sun patches, over the contact shadows.
+        <mesh geometry={glare} renderOrder={2}>
+          <meshBasicMaterial
+            map={floorGlareTexture()}
+            color={light.light}
+            transparent
+            opacity={0.22}
+            blending={AdditiveBlending}
+            depthWrite={false}
           />
         </mesh>
       )}

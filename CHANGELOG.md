@@ -2,6 +2,13 @@
 
 Newest entries at the top.
 
+## 2026-09-23
+- Graphics pass: floor wear at the doorway and down the aisle baked into the tiles, window reflections smeared across the polished floor, full anisotropy on floor and ceiling.
+- The view outside reads as daylight: the panorama carries an outdoor exposure and haze gathering towards the horizon, so windows look bright rather than flat green.
+- Walls carry a faint plaster texture (world-anchored UVs, one square metre per repeat) instead of flat colour; the whiteboard keeps the ghosts of wiped marker.
+- Desks got their ABS edge band and chairs a darker moulded rim, so both read as school furniture rather than slabs.
+- The class is students, not mothers: welcome note and code comments updated.
+
 ## 2026-09-22
 - Classroom visual level 2: roller blinds part-way down in every window (cassette, bottom bar, bead chain; seeded drop); double sockets along the walls, light switch and fire alarm call point by the door; four markers and an eraser on the whiteboard tray; door hardware (lever on rosette, key escutcheon, frosted vision panel, kick plate, hinges, overhead closer, threshold); ceiling diffusers, smoke detectors and front speakers in whole grid tiles. All merged into existing meshes: no new draw calls.
 - Fixed: the outdoor panorama showed through the gap between the shut door leaf and its casing, and under the leaf.

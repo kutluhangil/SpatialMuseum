@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { RoomDef } from '../schema/museum'
 import type { RoomLight } from '../design/light'
 import { ceilingGrid } from './ceilingGrid'
+import { wallFrame, wallPoint } from './wallFrame'
 import { daylight } from './bakedLight'
 
 /** Physical size of one repeat of the floor texture (Poly Haven interior_tiles: 1.9 m). */
@@ -44,8 +45,9 @@ function gridGeometry(
   colorAt: (x: number, z: number) => Color,
   uvScale: number | null,
   uvOrigin: { x: number; z: number } = { x: 0, z: 0 },
+  step = 1,
 ): BufferGeometry {
-  const { xs, zs } = grid(room, 1)
+  const { xs, zs } = grid(room, step)
   const pos: number[] = []
   const col: number[] = []
   const uv: number[] = []
@@ -86,6 +88,36 @@ function gridGeometry(
   return g
 }
 
+// Years of shoes: the tiles darken where people walk in and where they file down the aisle.
+const WEAR = { door: 0.09, doorRadius: 1.4, aisle: 0.05, aisleEdge: 0.35 }
+// Half a metre between floor vertices: fine enough for the worn patches to read as soft blotches.
+const FLOOR_STEP = 0.5
+
+/**
+ * How much the floor is worn at a point: strongest just inside each doorway, plus a band down the
+ * centre aisle of a classroom. Returns a multiplier at or below 1.
+ */
+function floorWear(room: RoomDef, px: number, pz: number): number {
+  let wear = 0
+  for (const door of room.doors) {
+    const f = wallFrame(room, door.wall)
+    const [dx, , dz] = wallPoint(f, door.offset, 0, WEAR.doorRadius * 0.55)
+    const t = Math.hypot(px - dx, pz - dz) / WEAR.doorRadius
+    wear = Math.max(wear, WEAR.door * (1 - smooth(t)))
+  }
+  const c = room.classroom
+  if (c) {
+    const f = wallFrame(room, c.front)
+    const [ax, , az] = wallPoint(f, f.length / 2, 0, 0)
+    const [bx, , bz] = wallPoint(f, f.length / 2, 0, 1)
+    // Distance from the aisle's centre line, which runs from the front wall to the back.
+    const across = Math.abs((px - ax) * (bz - az) - (pz - az) * (bx - ax))
+    const half = c.aisle / 2
+    wear = Math.max(wear, WEAR.aisle * (1 - smooth((across - half) / WEAR.aisleEdge)))
+  }
+  return 1 - wear
+}
+
 /** Tiled floor with world-anchored UVs and baked wall-seam shadow; the window side reads brighter. */
 export function buildFloor(room: RoomDef, light: RoomLight, tileMetres: number): BufferGeometry {
   // The texture carries the floor colour; vertex colours only add seam shadow and the room light.
@@ -98,9 +130,11 @@ export function buildFloor(room: RoomDef, light: RoomLight, tileMetres: number):
     true,
     (px, pz) => {
       const k = 1 - 0.28 * (1 - smooth(edgeDistance(room, px, pz) / 0.7))
-      return base.clone().multiplyScalar(k * daylight(room, px, pz))
+      return base.clone().multiplyScalar(k * daylight(room, px, pz) * floorWear(room, px, pz))
     },
     tileMetres,
+    { x: 0, z: 0 },
+    FLOOR_STEP,
   )
 }
 

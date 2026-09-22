@@ -3,7 +3,7 @@ import type { Museum, RoomDef } from '../schema/museum'
 import { wallFrame, wallPoint, wallYaw } from '../scene/wallFrame'
 import { classroomLayout } from './layout'
 import { buildClassroomFurniture, buildContactShadows } from './furniture'
-import { softShadowTexture } from '../design/proceduralTextures'
+import { boardGhostTexture, softShadowTexture } from '../design/proceduralTextures'
 import { lessonView } from '../lesson/lesson'
 import { useLessonStore } from '../lesson/lessonStore'
 import { Whiteboard } from '../lesson/Whiteboard'
@@ -53,6 +53,15 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
           opacity={0.55}
           depthWrite={false}
         />
+      </mesh>
+      {/* Old ink the eraser never took off: the board reads as used, not as a white rectangle. */}
+      <mesh
+        position={wallPoint(f, (b.u0 + b.u1) / 2, (b.v0 + b.v1) / 2, 0.021)}
+        rotation-y={yaw}
+        renderOrder={1}
+      >
+        <planeGeometry args={[b.u1 - b.u0 - 0.04, b.v1 - b.v0 - 0.04]} />
+        <meshBasicMaterial map={boardGhostTexture()} transparent depthWrite={false} />
       </mesh>
       {view && (
         <>

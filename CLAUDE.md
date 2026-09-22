@@ -27,6 +27,7 @@ reduced-motion, ≥ 7:1 metin kontrastı.
   PBR (`meshStandardMaterial`) yalnız baskı çerçevelerinde; ortam yansıması `EnvironmentLight` (yerel RoomEnvironment).
 - Draw call bütçesi: klasik WebGLRenderer'da multiview yok; VR'da her draw call iki kez çizilir. Yeni görsel öğe eklerken oda başına birleştir (merge) ve `?stats` ile ölç. İki kapı ötesindeki odalar `detail: 'far'` (tek derslikte etkisiz).
 - Sınıf mobilyası `src/classroom/layout.ts` (saf yerleşim) + `furniture.ts` (tek birleşik mesh); yeni parça oraya eklenir.
+- Sınıftaki izleyici kitlesi öğrenciler (proje başındaki "anneler" kurgusu geçersiz); metinler öğrencilere hitap eder.
 - Ders akışı `content/museum.json` → `lesson` (bölümler + sıralı adımlar); perde/tahta `src/lesson/lesson.ts` `lessonView`'dan beslenir.
 - Tablolar yalnız kamu malı / CC0: `scripts/fetch-artworks.ts` lisansı doğrulamadan indirmez; dini ikonografi bilinçli olarak yok.
 

@@ -59,6 +59,93 @@ export function sunPatchTexture(): CanvasTexture {
   return sunPatch
 }
 
+let boardGhost: CanvasTexture | null = null
+
+/**
+ * What a whiteboard keeps after it is wiped: faint arcs of old ink and the dry streaks of the
+ * eraser. Transparent, drawn over the board's own white surface.
+ */
+export function boardGhostTexture(): CanvasTexture {
+  boardGhost ??= canvasTexture(512, (ctx, s) => {
+    ctx.clearRect(0, 0, s, s)
+    ctx.filter = `blur(${s * 0.004}px)`
+    ctx.strokeStyle = 'rgba(40, 70, 90, 0.05)'
+    ctx.lineWidth = s * 0.012
+    // Eraser passes: wide, almost horizontal sweeps.
+    for (let i = 0; i < 9; i++) {
+      const y = (i + 0.5) * (s / 9)
+      ctx.beginPath()
+      ctx.moveTo(s * 0.04, y + Math.sin(i * 3.1) * s * 0.01)
+      ctx.bezierCurveTo(s * 0.35, y - s * 0.02, s * 0.65, y + s * 0.02, s * 0.96, y)
+      ctx.stroke()
+    }
+    // Ghosts of writing that never quite came off.
+    ctx.strokeStyle = 'rgba(30, 52, 64, 0.045)'
+    ctx.lineWidth = s * 0.005
+    for (let i = 0; i < 14; i++) {
+      const x = s * 0.08 + (i % 7) * s * 0.12
+      const y = s * (i < 7 ? 0.3 : 0.62)
+      ctx.beginPath()
+      ctx.arc(x, y, s * 0.03, Math.PI * 0.2, Math.PI * 1.5)
+      ctx.stroke()
+    }
+  })
+  return boardGhost
+}
+
+let plaster: CanvasTexture | null = null
+
+/**
+ * One square metre of painted plaster: near-white, so multiplying a wall's baked colour by it only
+ * breaks up the flatness. Fine speckle for the render, plus faint roller streaks left by the brush.
+ */
+export function plasterTexture(): CanvasTexture {
+  plaster ??= canvasTexture(256, (ctx, s) => {
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, s, s)
+    // Broad, heavily blurred roller passes: visible as unevenness, never as stripes.
+    ctx.filter = `blur(${s * 0.09}px)`
+    for (let i = 0; i < 7; i++) {
+      const x = (i / 7) * s + Math.sin(i * 7.31) * s * 0.03
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(0,0,0,0.012)' : 'rgba(255,255,255,0.03)'
+      ctx.fillRect(x, 0, s * 0.07, s)
+    }
+    ctx.filter = `blur(${s * 0.008}px)`
+    for (let i = 0; i < 1400; i++) {
+      const x = Math.random() * s
+      const y = Math.random() * s
+      ctx.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.035)'
+      ctx.fillRect(x, y, 1.5, 1.5)
+    }
+  })
+  plaster.wrapS = RepeatWrapping
+  plaster.wrapT = RepeatWrapping
+  return plaster
+}
+
+let floorGlare: CanvasTexture | null = null
+
+/**
+ * The window's reflection in a polished floor: brightest against the wall, stretching away and
+ * fading out. Additive, so black adds nothing. Row 0 of the canvas is the wall end.
+ */
+export function floorGlareTexture(): CanvasTexture {
+  floorGlare ??= canvasTexture(128, (ctx, s) => {
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, s, s)
+    const fade = ctx.createLinearGradient(0, 0, 0, s)
+    fade.addColorStop(0, '#ffffff')
+    fade.addColorStop(0.3, '#8a8a8a')
+    fade.addColorStop(1, '#000000')
+    // The blur softens the sides of the smear as well as its far end.
+    ctx.filter = `blur(${s * 0.06}px)`
+    ctx.fillStyle = fade
+    const m = s * 0.1
+    ctx.fillRect(m, 0, s - m * 2, s)
+  })
+  return floorGlare
+}
+
 let ceilingTile: CanvasTexture | null = null
 
 /**

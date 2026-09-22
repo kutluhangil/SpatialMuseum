@@ -1,19 +1,63 @@
 {
   "version": 2,
-  "title": { "tr": "Dijital Emzirme Müzesi", "en": "Digital Breastfeeding Museum" },
-  "spawn": { "roomId": "derslik", "position": [0.8, 0, 0.15], "yaw": 0.2, "posture": "seated" },
+  "title": {
+    "tr": "Dijital Emzirme Müzesi",
+    "en": "Digital Breastfeeding Museum"
+  },
+  "spawn": {
+    "roomId": "derslik",
+    "position": [0.8, 0, 0.15],
+    "yaw": 0.2,
+    "posture": "seated"
+  },
   "rooms": [
     {
       "id": "derslik",
-      "name": { "tr": "Derslik" },
-      "rect": { "x": -4.8, "z": -4, "width": 9.6, "depth": 8 },
+      "name": {
+        "tr": "Derslik"
+      },
+      "rect": {
+        "x": -4.8,
+        "z": -4,
+        "width": 9.6,
+        "depth": 8
+      },
       "height": 3.2,
-      "classroom": { "front": "north", "rows": 5, "desksPerSide": 2, "aisle": 1 },
-      "doors": [{ "wall": "south", "offset": 1, "width": 1 }],
+      "classroom": {
+        "front": "north",
+        "rows": 5,
+        "desksPerSide": 2,
+        "aisle": 1
+      },
+      "doors": [
+        {
+          "wall": "south",
+          "offset": 1,
+          "width": 1
+        }
+      ],
       "windows": [
-        { "wall": "west", "offset": 1.5, "width": 1.8, "sill": 0.9, "height": 1.8 },
-        { "wall": "west", "offset": 4, "width": 1.8, "sill": 0.9, "height": 1.8 },
-        { "wall": "west", "offset": 6.5, "width": 1.8, "sill": 0.9, "height": 1.8 }
+        {
+          "wall": "west",
+          "offset": 1.5,
+          "width": 1.8,
+          "sill": 0.9,
+          "height": 1.8
+        },
+        {
+          "wall": "west",
+          "offset": 4,
+          "width": 1.8,
+          "sill": 0.9,
+          "height": 1.8
+        },
+        {
+          "wall": "west",
+          "offset": 6.5,
+          "width": 1.8,
+          "sill": 0.9,
+          "height": 1.8
+        }
       ]
     }
   ],
@@ -22,63 +66,126 @@
       "id": "baski-besik",
       "type": "image",
       "roomId": "derslik",
-      "placement": { "wall": "east", "u": 2, "v": 1.85, "width": 0.75 },
+      "placement": {
+        "wall": "east",
+        "u": 2,
+        "v": 1.85,
+        "width": 0.75
+      },
       "src": "artworks/morisot-the-cradle.ktx2",
       "aspect": 0.8208,
       "frame": "black",
-      "label": { "title": { "tr": "Beşik" }, "body": { "tr": "Berthe Morisot · 1872" } }
+      "label": {
+        "title": {
+          "tr": "Beşik"
+        },
+        "body": {
+          "tr": "Berthe Morisot · 1872"
+        }
+      }
     },
     {
       "id": "baski-anne-ve-cocuk",
       "type": "image",
       "roomId": "derslik",
-      "placement": { "wall": "east", "u": 4, "v": 1.85, "width": 0.75 },
+      "placement": {
+        "wall": "east",
+        "u": 4,
+        "v": 1.85,
+        "width": 0.75
+      },
       "src": "artworks/cassatt-mother-and-child.ktx2",
       "aspect": 0.8267,
       "frame": "black",
-      "label": { "title": { "tr": "Anne ve Çocuk" }, "body": { "tr": "Mary Cassatt · 1884–1894" } }
+      "label": {
+        "title": {
+          "tr": "Anne ve Çocuk"
+        },
+        "body": {
+          "tr": "Mary Cassatt · 1884–1894"
+        }
+      }
     },
     {
       "id": "baski-emziren-anne",
       "type": "image",
       "roomId": "derslik",
-      "placement": { "wall": "east", "u": 6, "v": 1.85, "width": 0.75 },
+      "placement": {
+        "wall": "east",
+        "u": 6,
+        "v": 1.85,
+        "width": 0.75
+      },
       "src": "artworks/renoir-mother-nursing.ktx2",
       "aspect": 0.7793,
       "frame": "black",
       "label": {
-        "title": { "tr": "Çocuğunu Emziren Anne" },
-        "body": { "tr": "Pierre-Auguste Renoir · 1885" }
+        "title": {
+          "tr": "Çocuğunu Emziren Anne"
+        },
+        "body": {
+          "tr": "Pierre-Auguste Renoir · 1885"
+        }
       }
     },
     {
       "id": "baski-anne-sefkati",
       "type": "image",
       "roomId": "derslik",
-      "placement": { "wall": "south", "u": 7.4, "v": 1.85, "width": 0.7 },
+      "placement": {
+        "wall": "south",
+        "u": 7.4,
+        "v": 1.85,
+        "width": 0.7
+      },
       "src": "artworks/cassatt-maternal-caress.ktx2",
       "aspect": 0.741,
       "frame": "black",
-      "label": { "title": { "tr": "Anne Şefkati" }, "body": { "tr": "Mary Cassatt · y. 1891" } }
+      "label": {
+        "title": {
+          "tr": "Anne Şefkati"
+        },
+        "body": {
+          "tr": "Mary Cassatt · y. 1891"
+        }
+      }
     },
     {
       "id": "pano-kolostrum",
       "type": "text",
       "roomId": "derslik",
       "variant": "fact",
-      "placement": { "wall": "south", "u": 3.85, "v": 1.55, "width": 1.2, "depthOffset": 0.04 },
+      "placement": {
+        "wall": "south",
+        "u": 3.85,
+        "v": 1.55,
+        "width": 1.2,
+        "depthOffset": 0.04
+      },
       "aspect": 1.2,
-      "title": { "tr": "Biliyor muydunuz?" },
-      "body": { "tr": "Örnek metin. Buraya kısa bir bilgi notu gelecek." }
+      "title": {
+        "tr": "Biliyor muydunuz?"
+      },
+      "body": {
+        "tr": "Örnek metin. Buraya kısa bir bilgi notu gelecek."
+      }
     },
     {
       "id": "pano-sanat",
       "type": "text",
       "roomId": "derslik",
       "variant": "fact",
-      "placement": { "wall": "south", "u": 5.15, "v": 1.55, "width": 1.2, "depthOffset": 0.04 },
+      "placement": {
+        "wall": "south",
+        "u": 5.15,
+        "v": 1.55,
+        "width": 1.2,
+        "depthOffset": 0.04
+      },
       "aspect": 1.2,
-      "title": { "tr": "Kamu malı eserler" },
+      "title": {
+        "tr": "Kamu malı eserler"
+      },
       "body": {
         "tr": "Duvardaki baskılar Wikimedia Commons'tan, kamu malı ya da CC0 lisanslı kopyalardır."
       }
@@ -86,34 +193,67 @@
   ],
   "lesson": {
     "sections": [
-      { "id": "karsilama", "title": { "tr": "Hoş geldiniz" } },
-      { "id": "pozisyonlar", "title": { "tr": "Emzirme pozisyonları" } },
-      { "id": "gece", "title": { "tr": "Gece emzirmeleri" } },
-      { "id": "ilk-gunler", "title": { "tr": "İlk günler" } },
-      { "id": "sanat", "title": { "tr": "Sanatta annelik" } }
+      {
+        "id": "karsilama",
+        "title": {
+          "tr": "Hoş geldiniz"
+        }
+      },
+      {
+        "id": "pozisyonlar",
+        "title": {
+          "tr": "Emzirme pozisyonları"
+        }
+      },
+      {
+        "id": "gece",
+        "title": {
+          "tr": "Gece emzirmeleri"
+        }
+      },
+      {
+        "id": "ilk-gunler",
+        "title": {
+          "tr": "İlk günler"
+        }
+      },
+      {
+        "id": "sanat",
+        "title": {
+          "tr": "Sanatta annelik"
+        }
+      }
     ],
     "steps": [
       {
         "id": "ders-giris",
         "section": "karsilama",
         "type": "text",
-        "title": { "tr": "Hoş geldiniz" },
+        "title": {
+          "tr": "Hoş geldiniz"
+        },
         "body": {
-          "tr": "Örnek metin. Videolar perdede, notlar tahtada. İlerlemek için Sonraki'ye basın."
+          "tr": "Öğrenciler için örnek ders. Videolar perdede, notlar tahtada."
         }
       },
       {
         "id": "pozisyonlar-giris",
         "section": "pozisyonlar",
         "type": "text",
-        "title": { "tr": "Emzirme pozisyonları" },
-        "body": { "tr": "Örnek metin. Bu bölümde farklı emzirme pozisyonlarını göreceksiniz." }
+        "title": {
+          "tr": "Emzirme pozisyonları"
+        },
+        "body": {
+          "tr": "Örnek metin. Bu bölümde farklı emzirme pozisyonlarını göreceksiniz."
+        }
       },
       {
         "id": "vid-pozisyonlar",
         "section": "pozisyonlar",
         "type": "video",
-        "title": { "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak emzirme" },
+        "title": {
+          "tr": "Beşik, çapraz beşik, futbol topu ve yan yatarak emzirme"
+        },
         "src": "videos/spike-test-pattern.mp4",
         "poster": "posters/spike-test-pattern.jpg"
       },
@@ -121,14 +261,20 @@
         "id": "gece-giris",
         "section": "gece",
         "type": "text",
-        "title": { "tr": "Gece emzirmeleri" },
-        "body": { "tr": "Örnek metin. Gece beslenmeleri ve uyku düzeni üzerine." }
+        "title": {
+          "tr": "Gece emzirmeleri"
+        },
+        "body": {
+          "tr": "Örnek metin. Gece beslenmeleri ve uyku düzeni üzerine."
+        }
       },
       {
         "id": "vid-gece",
         "section": "gece",
         "type": "video",
-        "title": { "tr": "Gece beslenmesi (örnek)" },
+        "title": {
+          "tr": "Gece beslenmesi (örnek)"
+        },
         "src": "videos/spike-test-pattern.mp4",
         "poster": "posters/spike-test-pattern.jpg"
       },
@@ -136,14 +282,20 @@
         "id": "ilk-gunler-giris",
         "section": "ilk-gunler",
         "type": "text",
-        "title": { "tr": "İlk günler" },
-        "body": { "tr": "Örnek metin. Doğumdan sonraki ilk günlerde emzirme." }
+        "title": {
+          "tr": "İlk günler"
+        },
+        "body": {
+          "tr": "Örnek metin. Doğumdan sonraki ilk günlerde emzirme."
+        }
       },
       {
         "id": "vid-ilk-gunler",
         "section": "ilk-gunler",
         "type": "video",
-        "title": { "tr": "İlk emzirme (örnek)" },
+        "title": {
+          "tr": "İlk emzirme (örnek)"
+        },
         "src": "videos/spike-test-pattern.mp4",
         "poster": "posters/spike-test-pattern.jpg"
       },
@@ -151,8 +303,12 @@
         "id": "sanat-giris",
         "section": "sanat",
         "type": "text",
-        "title": { "tr": "Sanatta annelik" },
-        "body": { "tr": "Baskılar 1872–1894 yılları arasında annelik ve bebek bakımını resmeder." }
+        "title": {
+          "tr": "Sanatta annelik"
+        },
+        "body": {
+          "tr": "Baskılar 1872–1894 yılları arasında annelik ve bebek bakımını resmeder."
+        }
       }
     ]
   }

@@ -9,5 +9,5 @@ export const usePerfStats = create<{ stats: RenderStats | null; set: (s: RenderS
   }),
 )
 
-/** Readout is opt-in via ?stats so it never shows for mothers or nurses. */
+/** Readout is opt-in via ?stats so it never shows for the students in the lesson. */
 export const statsEnabled = new URLSearchParams(window.location.search).has('stats')
