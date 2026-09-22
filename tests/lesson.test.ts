@@ -21,7 +21,7 @@ describe('lessonView', () => {
     const v = lessonView(lesson, index)
     expect(v.screen.kind).toBe('video')
     expect(v.screen.kind === 'video' && v.screen.step.id).toBe('vid-pozisyonlar')
-    expect(v.board?.id).toBe('kavrama-belirti')
+    expect(v.board?.id).toBe('pozisyonlar-giris')
     expect(v.section.id).toBe('pozisyonlar')
   })
 

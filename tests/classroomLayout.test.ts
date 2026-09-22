@@ -4,6 +4,8 @@ import { CLASSROOM, DOOR_HEIGHT, MuseumSchema, roomOpenings } from '../src/schem
 import { migrateMuseum } from '../src/schema/migrate'
 import { classroomLayout } from '../src/classroom/layout'
 import { ceilingGrid } from '../src/scene/ceilingGrid'
+import { wallFrame } from '../src/scene/wallFrame'
+
 import { JAMB_WIDTH, buildSunPatches } from '../src/scene/WallBuilder'
 import { buildClassroomFurniture, buildContactShadows } from '../src/classroom/furniture'
 import {
@@ -19,11 +21,14 @@ const museum = MuseumSchema.parse(
 const room = museum.rooms[0]
 if (!room?.classroom) throw new Error('content/museum.json has no classroom room')
 const layout = classroomLayout(room)
+const wallLength = (side: 'north' | 'east' | 'south' | 'west') => wallFrame(room, side).length
 
 describe('classroomLayout', () => {
-  it('seats 40 students at 20 two-person desks', () => {
-    expect(layout.desks).toHaveLength(20)
-    expect(layout.chairs).toHaveLength(40)
+  it('fills the room with two-person desks, two seats each', () => {
+    const c = room.classroom
+    if (!c) throw new Error('not a classroom')
+    expect(layout.desks).toHaveLength(c.rows * c.desksPerSide * 2)
+    expect(layout.chairs).toHaveLength(layout.desks.length * 2)
   })
 
   it('keeps every desk inside the room, clear of the side walls and of each other', () => {
@@ -51,10 +56,15 @@ describe('classroomLayout', () => {
     ).toHaveLength(0)
   })
 
-  it('puts the board and screen side by side on the front wall', () => {
-    expect(layout.board).toEqual({ u0: 0.7, u1: 4.7, v0: 0.9, v1: 2.1 })
-    expect(layout.screen.u0).toBeCloseTo(5)
-    expect(layout.screen.u1).toBeCloseTo(8.6)
+  it('centres the board and screen on the front wall, side by side', () => {
+    const front = wallLength(room.classroom?.front ?? 'north')
+    const block = CLASSROOM.board.width + CLASSROOM.screen.gap + CLASSROOM.screen.width
+    expect(layout.board.u0).toBeCloseTo((front - block) / 2)
+    expect(layout.board.u1 - layout.board.u0).toBeCloseTo(CLASSROOM.board.width)
+    expect(layout.screen.u0).toBeCloseTo(layout.board.u1 + CLASSROOM.screen.gap)
+    expect(layout.screen.u1).toBeCloseTo(layout.screen.u0 + CLASSROOM.screen.width)
+    // The block sits inside the wall with an equal margin on both sides.
+    expect(front - layout.screen.u1).toBeCloseTo(layout.board.u0)
   })
 
   it('matches the spawn in content/museum.json and lets the player stand up without a jolt', () => {
@@ -211,9 +221,8 @@ describe('classroomLayout', () => {
     for (const d of room.doors.filter((x) => x.wall === rail.wall)) {
       expect(rail.u - half).toBeGreaterThan(d.offset + d.width / 2 + JAMB_WIDTH)
     }
-    if (layout.corkBoard?.wall === rail.wall) {
-      expect(rail.u + half).toBeLessThan(layout.corkBoard.area.u0)
-    }
+    // Nothing else hangs beside it: the rest of that wall is the class's exhibition.
+    expect(rail.u + half).toBeLessThan(wallLength(rail.wall))
     expect(rail.v).toBeGreaterThan(CLASSROOM.desk.height)
   })
 })

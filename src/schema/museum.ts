@@ -95,6 +95,34 @@ const TextPanel = Base.extend({
 
 const Exhibit = z.discriminatedUnion('type', [VideoExhibit, ImageExhibit, TextPanel])
 
+/**
+ * The class's own posters, hung as one run along a wall. They are not exhibits: two dozen framed
+ * exhibits would be two dozen draw calls and as many textures, so the pages are packed into KTX2
+ * atlases and the whole run is drawn as one mesh per atlas.
+ */
+const PosterAtlas = z.object({
+  src: z.string(),
+  columns: z.number().int().positive(),
+  rows: z.number().int().positive(),
+  /** Cells actually used, filled row by row. */
+  count: z.number().int().positive(),
+})
+
+const PosterWall = z.object({
+  roomId: z.string(),
+  wall: WallSide,
+  /** The run of wall the posters hang on, in metres from the wall's left end. */
+  from: z.number(),
+  to: z.number(),
+  /** Height of the centre of each row; two rows is a salon hang, one row is a gallery hang. */
+  rows: z.array(z.number()).min(1),
+  width: z.number().positive(),
+  aspect: z.number().positive(),
+  /** Paper border around each page, as the passepartout of a frame. */
+  mount: z.number().nonnegative().default(0.03),
+  atlases: z.array(PosterAtlas).min(1),
+})
+
 const LessonSection = z.object({ id: z.string().min(1), title: Localized })
 
 const LessonVideo = z.object({
@@ -159,6 +187,8 @@ export type RoomDef = z.infer<typeof Room>
 export type ExhibitDef = z.infer<typeof Exhibit>
 export type PlacementDef = z.infer<typeof Placement>
 export type ClassroomDef = NonNullable<RoomDef['classroom']>
+export type PosterWallDef = z.infer<typeof PosterWall>
+export type PosterAtlasDef = z.infer<typeof PosterAtlas>
 export type LessonDef = z.infer<typeof Lesson>
 export type LessonSectionDef = z.infer<typeof LessonSection>
 export type LessonStepDef = z.infer<typeof LessonStep>
@@ -208,6 +238,8 @@ export function exhibitHeight(exhibit: ExhibitDef): number {
 type Interval = readonly [number, number]
 const overlaps = (a: Interval, b: Interval) => a[0] < b[1] && b[0] < a[1]
 const EPS = 1e-6
+// Posters hang clear of the skirting and the scuff rail below them.
+const BASEBOARD_CLEARANCE = 0.95
 
 const MuseumBase = z.object({
   version: z.literal(2),
@@ -220,6 +252,7 @@ const MuseumBase = z.object({
   }),
   rooms: z.array(Room).min(1),
   exhibits: z.array(Exhibit),
+  posterWall: PosterWall.optional(),
   lesson: Lesson.prefault({}),
 })
 
@@ -458,6 +491,68 @@ export const MuseumSchema = MuseumBase.superRefine((m, ctx) => {
       }
     })
   })
+
+  const wall = m.posterWall
+  if (wall) {
+    const path = ['posterWall']
+    const room = m.rooms.find((r) => r.id === wall.roomId)
+    if (!room) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [...path, 'roomId'],
+        message: `unknown room "${wall.roomId}"`,
+      })
+    } else {
+      const len = wallLength(room, wall.wall)
+      if (wall.from < -EPS || wall.to > len + EPS || wall.to - wall.from < wall.width) {
+        ctx.addIssue({
+          code: 'custom',
+          path,
+          message: `the poster run spans ${wall.from}..${wall.to} m of a ${len} m ${wall.wall} wall`,
+        })
+      }
+      const height = wall.width / wall.aspect
+      for (const [ri, centre] of wall.rows.entries()) {
+        if (centre - height / 2 < BASEBOARD_CLEARANCE || centre + height / 2 > room.height - EPS) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [...path, 'rows', ri],
+            message: `row at ${centre} m does not fit a ${height.toFixed(2)} m poster in a ${room.height} m room`,
+          })
+        }
+      }
+      const run: Interval = [wall.from, wall.to]
+      for (const opening of roomOpenings(room, wall.wall)) {
+        const o: Interval = [opening.offset - opening.width / 2, opening.offset + opening.width / 2]
+        if (overlaps(run, o)) {
+          ctx.addIssue({
+            code: 'custom',
+            path,
+            message: `the poster run crosses an opening at ${opening.offset} m on the ${wall.wall} wall`,
+          })
+        }
+      }
+      const total = wall.atlases.reduce((n, a) => n + a.count, 0)
+      const perRow = Math.ceil(total / wall.rows.length)
+      const needed = perRow * wall.width
+      if (needed > wall.to - wall.from + EPS) {
+        ctx.addIssue({
+          code: 'custom',
+          path,
+          message: `${total} posters over ${wall.rows.length} rows need ${needed.toFixed(2)} m; the run is ${(wall.to - wall.from).toFixed(2)} m`,
+        })
+      }
+      wall.atlases.forEach((atlas, ai) => {
+        if (atlas.count > atlas.columns * atlas.rows) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [...path, 'atlases', ai, 'count'],
+            message: `${atlas.count} posters do not fit a ${atlas.columns} × ${atlas.rows} atlas`,
+          })
+        }
+      })
+    }
+  }
 
   const sectionIds = m.lesson.sections.map((s) => s.id)
   m.lesson.sections.forEach((s, si) => {

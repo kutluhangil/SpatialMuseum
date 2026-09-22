@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Vector3 } from 'three'
 import type { Museum as MuseumDef } from '../schema/museum'
@@ -8,6 +8,7 @@ import { Room } from './Room'
 import { Panorama } from './Panorama'
 import { boxSegments, museumSegments } from '../locomotion/collision'
 import { Classroom } from '../classroom/Classroom'
+import { PosterWall } from '../exhibits/PosterWall'
 import { classroomLayout } from '../classroom/layout'
 import { usePlayerStore } from '../locomotion/playerStore'
 
@@ -57,6 +58,11 @@ export function Museum({ museum }: { museum: MuseumDef }) {
           <group key={room.id}>
             <Room room={room} exhibits={exhibits} />
             {room.classroom && <Classroom room={room} museum={museum} />}
+            {museum.posterWall?.roomId === room.id && (
+              <Suspense fallback={null}>
+                <PosterWall room={room} wall={museum.posterWall} />
+              </Suspense>
+            )}
             {exhibits.map((e) => (
               <Exhibit
                 key={e.id}

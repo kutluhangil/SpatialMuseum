@@ -20,7 +20,6 @@ export type ClassroomLayout = {
   projector: Vec3
   clock: { u: number; v: number }
   radiators: { wall: WallSideName; u: number; width: number }[]
-  corkBoard: { wall: WallSideName; area: WallArea } | null
   bin: Placed
   coatRail: { wall: WallSideName; u: number; v: number; width: number } | null
   notices: WallSpot[]
@@ -40,10 +39,10 @@ const OPPOSITE: Record<WallSideName, WallSideName> = {
   west: 'east',
 }
 const LECTURER_DESK = { u: 2, d: 1, width: 1.4, depth: 0.7 }
-const CORK = { u0: 3.2, u1: 5.8, v0: 1, v1: 2.1 }
 // Waste bin in the front corner beside the lecturer, out of the aisle and of the first row.
 const BIN = { u: 0.35, d: 0.45, radius: 0.17 }
-// Coat rail on the back wall, between the door casing and the pin board.
+// Coat rail just inside the door, where a coat is actually hung; the rest of the back wall is the
+// class's exhibition.
 const COAT_RAIL = { width: 0.6, v: 1.7, gap: 0.35 }
 // Notices pinned straight to the wall above the rail: the pin board itself carries the lesson panels.
 const NOTICE = { v: 2.25, spread: 0.15 }
@@ -135,9 +134,21 @@ function ceilingFixtures(room: RoomDef, front: WallFrame, projector: Vec3) {
     .slice(0, -1)
     .map((z) => ({ x: midCol + tile, z: z + tile }))
     .filter(clearOfProjector)
+  // No two fittings share a tile, and none lands on a light panel.
+  const taken = new Set(
+    [...grid.panels, ...diffusers, ...smokeDetectors].map((p) => `${p.x},${p.z}`),
+  )
+  const free = (p: CeilingSpot) => !taken.has(`${p.x},${p.z}`)
   const speakers = SPEAKER.at.map((t) => {
     const [x, , z] = wallPoint(front, front.length * t, 0, SPEAKER.d)
-    return { x: tileCentre(x, grid.xs, tile), z: tileCentre(z, grid.zs, tile) }
+    let spot = { x: tileCentre(x, grid.xs, tile), z: tileCentre(z, grid.zs, tile) }
+    // Step further into the room until the tile is free; the front rows still hear it.
+    for (let n = 1; n <= 4 && !free(spot); n++) {
+      const [sx, , sz] = wallPoint(front, front.length * t, 0, SPEAKER.d + n * tile)
+      spot = { x: tileCentre(sx, grid.xs, tile), z: tileCentre(sz, grid.zs, tile) }
+    }
+    taken.add(`${spot.x},${spot.z}`)
+    return spot
   })
   return { diffusers, smokeDetectors, speakers }
 }
@@ -228,7 +239,11 @@ export function classroomLayout(room: RoomDef): ClassroomLayout {
     yaw: frontYaw + Math.PI,
   }
 
-  const board = { u0: B.margin, u1: B.margin + B.width, v0: B.bottom, v1: B.bottom + B.height }
+  // Board, gap and screen make one block; on a wall wider than the block it is centred, so a big
+  // hall does not leave the teaching wall lopsided.
+  const blockWidth = B.width + S.gap + S.width
+  const boardU0 = Math.max(B.margin, (f.length - blockWidth) / 2)
+  const board = { u0: boardU0, u1: boardU0 + B.width, v0: B.bottom, v1: B.bottom + B.height }
   const screenU0 = board.u1 + S.gap
   const screen = {
     u0: screenU0,
@@ -242,8 +257,6 @@ export function classroomLayout(room: RoomDef): ClassroomLayout {
 
   const radiators = room.windows.map((w) => ({ wall: w.wall, u: w.offset, width: w.width - 0.2 }))
   const back = OPPOSITE[c.front]
-  const corkBoard =
-    wallFrame(room, back).length >= CORK.u1 + 0.3 ? { wall: back, area: CORK } : null
 
   const switches: WallSpot[] = []
   const callPoints: WallSpot[] = []
@@ -261,7 +274,7 @@ export function classroomLayout(room: RoomDef): ClassroomLayout {
 
   const bin = { position: at(BIN.u, BIN.d), yaw: frontYaw }
 
-  // The rail goes midway between the door casing and the pin board, if that leaves it room.
+  // Right next to the door, so it never runs into whatever hangs along the rest of the wall.
   const backFrame = wallFrame(room, back)
   const doorEnd = Math.max(
     0,
@@ -269,10 +282,10 @@ export function classroomLayout(room: RoomDef): ClassroomLayout {
       .filter((d) => d.wall === back)
       .map((d) => d.offset + d.width / 2 + JAMB_WIDTH + COAT_RAIL.gap),
   )
-  const railEnd = (corkBoard?.area.u0 ?? backFrame.length) - COAT_RAIL.gap
+  const railCentre = doorEnd + COAT_RAIL.width / 2
   const coatRail =
-    railEnd - doorEnd >= COAT_RAIL.width
-      ? { wall: back, u: (doorEnd + railEnd) / 2, v: COAT_RAIL.v, width: COAT_RAIL.width }
+    railCentre + COAT_RAIL.width / 2 <= backFrame.length
+      ? { wall: back, u: railCentre, v: COAT_RAIL.v, width: COAT_RAIL.width }
       : null
 
   const notices = coatRail
@@ -303,7 +316,6 @@ export function classroomLayout(room: RoomDef): ClassroomLayout {
     projector,
     clock,
     radiators,
-    corkBoard,
     bin,
     coatRail,
     notices,

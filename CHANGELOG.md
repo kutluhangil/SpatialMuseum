@@ -3,6 +3,12 @@
 Newest entries at the top.
 
 ## 2026-09-23
+- The class's own work is in the room: 24 poster pages hung in two rows along the back wall and six video stations on the side wall, imported from `content/media/raw` by `npm run media:classroom` (KTX2 atlases for the pages, H.264 for the videos).
+- The posters are drawn as two atlases, so the whole exhibition costs one draw call per sheet instead of one per page; `posterWall` in `content/museum.json` decides where the run hangs and the schema checks it clears the door and fits the wall.
+- Pages drawn in white ink on a transparent background are flattened onto a dark board rather than white paper, which is what makes half of them readable at all.
+- The room grew to a 14 × 12 m hall (30 desks, 60 seats, 3.4 m ceiling) so the exhibition has wall to hang on; the board and screen are centred on the front wall, and the pin board gave way to the posters.
+- The lesson plays the class's own videos: six sections now, with expressing and storing milk, and the difficulties that come up.
+- Wall screens got a bezel and a play mark, so they read as something to press.
 - Meta Quest 2 is now the baseline device: quality profiles per headset (framebuffer scale, foveation, target frame rate, anisotropy), the two decorative transparent passes switched off there, and a `?stats` panel on the wall so the headset can be calibrated from inside it (ADR `docs/decisions/0006-quest2.md`).
 - Teleporting blinks to black for a tenth of a second, which is what keeps a jump cut comfortable.
 - English throughout: lesson, sections, painting labels and interface, chosen by `?lang=en`, a switch in the corner or the browser's language, and remembered.

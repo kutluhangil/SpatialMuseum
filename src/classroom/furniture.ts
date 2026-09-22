@@ -463,28 +463,6 @@ export function buildClassroomFurniture(room: RoomDef, layout: ClassroomLayout):
     }
   }
 
-  // Cork pin board on the back wall, in a light wooden frame.
-  if (layout.corkBoard) {
-    const f = wallFrame(room, layout.corkBoard.wall)
-    const y = wallYaw(f)
-    const a = layout.corkBoard.area
-    const cu = (a.u0 + a.u1) / 2
-    const cv = (a.v0 + a.v1) / 2
-    parts.push(
-      onWall(cu, cv, 0.01, shadedBox(a.u1 - a.u0, a.v1 - a.v0, 0.02, lit(palette.mantar)), f, y),
-    )
-    parts.push(
-      onWall(
-        cu,
-        cv,
-        0.006,
-        shadedBox(a.u1 - a.u0 + 0.06, a.v1 - a.v0 + 0.06, 0.012, lit(palette.laminat)),
-        f,
-        y,
-      ),
-    )
-  }
-
   // Markers and eraser on the board tray (tray top at v0 - 0.02).
   const trayTop = b.v0 - 0.02
   for (const [i, cap] of MARKER_CAPS.entries()) {

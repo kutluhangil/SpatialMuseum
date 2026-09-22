@@ -1,0 +1,249 @@
+{
+  "note": "Written by scripts/import-classroom-media.ts from content/media/raw. Sources belong to the class.",
+  "atlas": {
+    "columns": 3,
+    "rows": 4,
+    "cell": {
+      "width": 724,
+      "height": 1024
+    }
+  },
+  "posters": [
+    {
+      "slug": "anne-sutu-neden-onemli",
+      "title": "Anne sütü bebekler için neden önemlidir?",
+      "group": "Anne sütü",
+      "source": "helin.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 0
+    },
+    {
+      "slug": "emzirmek-anne-sagligi",
+      "title": "Emzirmek anne sağlığı için neden önemlidir?",
+      "group": "Anne sütü",
+      "source": "yeliz.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 1
+    },
+    {
+      "slug": "ne-kadar-sure-emzirme",
+      "title": "Bebek ne kadar süre emzirilmelidir?",
+      "group": "Anne sütü",
+      "source": "melis.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 2
+    },
+    {
+      "slug": "anne-sutunun-rengi",
+      "title": "Anne sütünün rengi nasıl olmalıdır?",
+      "group": "Anne sütü",
+      "source": "ecem.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 3
+    },
+    {
+      "slug": "su-ve-ek-gida",
+      "title": "Emzirmenin yanında su ya da başka besinler?",
+      "group": "Anne sütü",
+      "source": "ecem 2.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 4
+    },
+    {
+      "slug": "bebegin-midesi",
+      "title": "Bebeğin midesinin büyüklüğü ne kadardır?",
+      "group": "Anne sütü",
+      "source": "gizem.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 5
+    },
+    {
+      "slug": "sut-nasil-uretilir",
+      "title": "Memelerde süt nasıl üretilir?",
+      "group": "Süt üretimi",
+      "source": "AYŞENUR 1.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 6
+    },
+    {
+      "slug": "sut-nasil-akar",
+      "title": "Süt memeden nasıl akar?",
+      "group": "Süt üretimi",
+      "source": "AYŞENUR 2.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 7
+    },
+    {
+      "slug": "sut-akma-ipuclari",
+      "title": "Sütün aktığını gösteren ipuçları nelerdir?",
+      "group": "Süt üretimi",
+      "source": "AYŞENUR 3.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 8
+    },
+    {
+      "slug": "sut-akmasi-kolaylasir",
+      "title": "Sütün akması nasıl kolaylaşır?",
+      "group": "Süt üretimi",
+      "source": "AYŞENUR 4.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 9
+    },
+    {
+      "slug": "emzirirken-dikkat",
+      "title": "Emzirirken dikkat edilmesi gerekenler",
+      "group": "Pozisyonlar",
+      "source": "canan 1.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 10
+    },
+    {
+      "slug": "kucaklama-pozisyonu",
+      "title": "Kucaklama pozisyonu",
+      "group": "Pozisyonlar",
+      "source": "canan2.png",
+      "atlas": "documents/wall-1.ktx2",
+      "cell": 11
+    },
+    {
+      "slug": "ters-kucaklama-pozisyonu",
+      "title": "Ters kucaklama pozisyonu",
+      "group": "Pozisyonlar",
+      "source": "canan 3.png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 0
+    },
+    {
+      "slug": "koltuk-alti-pozisyonu",
+      "title": "Koltuk altı pozisyonu",
+      "group": "Pozisyonlar",
+      "source": "canan 4.png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 1
+    },
+    {
+      "slug": "yan-yatis-pozisyonu",
+      "title": "Yan yatış pozisyonu",
+      "group": "Pozisyonlar",
+      "source": "canan 5.png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 2
+    },
+    {
+      "slug": "biyolojik-emzirme",
+      "title": "Biyolojik emzirme",
+      "group": "Pozisyonlar",
+      "source": "canan 6.png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 3
+    },
+    {
+      "slug": "hangi-durumlarda-sagilir",
+      "title": "Hangi durumlarda süt sağılır?",
+      "group": "Süt sağma",
+      "source": ",,.png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 4
+    },
+    {
+      "slug": "sagmadan-once-hazirlik",
+      "title": "Süt sağmadan önce nasıl hazırlık yapmalıyım?",
+      "group": "Süt sağma",
+      "source": "oda 5.png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 5
+    },
+    {
+      "slug": "elle-sagma-teknigi",
+      "title": "Elle süt sağma tekniği",
+      "group": "Süt sağma",
+      "source": "oda 5..png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 6
+    },
+    {
+      "slug": "pompa-ile-sagma",
+      "title": "Pompa ile süt sağma tekniği",
+      "group": "Süt sağma",
+      "source": "oda 5.png......png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 7
+    },
+    {
+      "slug": "enjektorle-sagma",
+      "title": "Enjektörle süt sağma tekniği",
+      "group": "Süt sağma",
+      "source": "oda 5.png...png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 8
+    },
+    {
+      "slug": "ne-siklikla-sagma",
+      "title": "Ne kadar sıklıkla süt sağmalıyım?",
+      "group": "Süt sağma",
+      "source": "oda 5.png.....png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 9
+    },
+    {
+      "slug": "anne-sutu-nasil-saklanir",
+      "title": "Anne sütü nasıl saklanır?",
+      "group": "Süt sağma",
+      "source": "oda 5.png........png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 10
+    },
+    {
+      "slug": "sagilan-sut-nasil-verilir",
+      "title": "Sağılan süt bebeğe nasıl verilir?",
+      "group": "Süt sağma",
+      "source": "oda 5.png,.png",
+      "atlas": "documents/wall-2.ktx2",
+      "cell": 11
+    }
+  ],
+  "videos": [
+    {
+      "slug": "emzirmeye-hazirlik",
+      "title": "Emzirmeye hazırlık",
+      "source": "1..mov",
+      "src": "videos/emzirmeye-hazirlik.mp4",
+      "poster": "posters/emzirmeye-hazirlik.jpg"
+    },
+    {
+      "slug": "emzirme-pozisyonlari",
+      "title": "Emzirme pozisyonları",
+      "source": "2..mov",
+      "src": "videos/emzirme-pozisyonlari.mp4",
+      "poster": "posters/emzirme-pozisyonlari.jpg"
+    },
+    {
+      "slug": "dogru-kavrama",
+      "title": "Doğru kavrama",
+      "source": "3.mov",
+      "src": "videos/dogru-kavrama.mp4",
+      "poster": "posters/dogru-kavrama.jpg"
+    },
+    {
+      "slug": "sut-sagma",
+      "title": "Süt sağma",
+      "source": "4.mov",
+      "src": "videos/sut-sagma.mp4",
+      "poster": "posters/sut-sagma.jpg"
+    },
+    {
+      "slug": "bebek-bakimi",
+      "title": "Bebek bakımı",
+      "source": "5.mov",
+      "src": "videos/bebek-bakimi.mp4",
+      "poster": "posters/bebek-bakimi.jpg"
+    },
+    {
+      "slug": "emzirme-sorunlari",
+      "title": "Emzirme sorunları",
+      "source": "6.mov",
+      "src": "videos/emzirme-sorunlari.mp4",
+      "poster": "posters/emzirme-sorunlari.jpg"
+    }
+  ]
+}

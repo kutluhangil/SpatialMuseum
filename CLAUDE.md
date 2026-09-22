@@ -28,6 +28,10 @@ reduced-motion, ≥ 7:1 metin kontrastı.
 - Draw call bütçesi: klasik WebGLRenderer'da multiview yok; VR'da her draw call iki kez çizilir. Yeni görsel öğe eklerken oda başına birleştir (merge) ve `?stats` ile ölç. İki kapı ötesindeki odalar `detail: 'far'` (tek derslikte etkisiz).
 - Sınıf mobilyası `src/classroom/layout.ts` (saf yerleşim) + `furniture.ts` (tek birleşik mesh); yeni parça oraya eklenir.
 - Sınıftaki izleyici kitlesi öğrenciler (proje başındaki "anneler" kurgusu geçersiz); metinler öğrencilere hitap eder.
+- Sınıfın kendi materyali `content/media/raw` altında durur (git'e girmez); `npm run media:classroom`
+  afişleri KTX2 atlasına, videoları H.264 mp4'e çevirir ve `content/media/documents.json`'u yazar.
+- Afişler tek tek sergi (`exhibits`) değildir: `posterWall` bölümü + `src/exhibits/PosterWall.tsx`;
+  atlas başına tek draw call. Yeni sayfa eklerken atlas hücre sayısını ve `count` alanını güncelle.
 - Taban cihaz Meta Quest 2 (`docs/decisions/0006-quest2.md`). Kalite profili `src/xr/device.ts`;
   yeni saydam katman eklerken Quest 2'de kapatılabilir olmalı ve `?stats` ile ölçülmeli.
 - Metinler iki dilli: içerik `Localized` (`tr` zorunlu, `en` opsiyonel), arayüz `src/i18n/strings.ts`.

@@ -15,7 +15,8 @@
     "media:spike": "bash scripts/make-test-video.sh",
     "media:artworks": "node scripts/fetch-artworks.ts",
     "media:polyhaven": "node scripts/fetch-polyhaven.ts",
-    "test:visual": "playwright test"
+    "test:visual": "playwright test",
+    "media:classroom": "node scripts/import-classroom-media.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
