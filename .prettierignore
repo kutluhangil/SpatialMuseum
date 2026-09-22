@@ -1,0 +1,5 @@
+dist
+node_modules
+content/media
+public/fonts
+*.md

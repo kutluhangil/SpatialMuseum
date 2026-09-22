@@ -1,0 +1,66 @@
+import { useEffect, useMemo } from 'react'
+import type { Museum, RoomDef } from '../schema/museum'
+import { wallFrame, wallPoint, wallYaw } from '../scene/wallFrame'
+import { classroomLayout } from './layout'
+import { buildClassroomFurniture } from './furniture'
+import { lessonView } from '../lesson/lesson'
+import { useLessonStore } from '../lesson/lessonStore'
+import { Whiteboard } from '../lesson/Whiteboard'
+import { ProjectionScreen } from '../lesson/ProjectionScreen'
+import { DeskButtons } from '../lesson/DeskButtons'
+import { LessonControls } from '../lesson/LessonControls'
+import { CLASSROOM } from '../schema/museum'
+
+/** Everything that makes the room a classroom: merged furniture plus the lesson on board and screen. */
+export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
+  const layout = useMemo(() => classroomLayout(room), [room])
+  const furniture = useMemo(() => buildClassroomFurniture(room, layout), [room, layout])
+  useEffect(() => () => furniture.dispose(), [furniture])
+  const index = useLessonStore((s) => s.index)
+  const hasLesson = museum.lesson.steps.length > 0
+  const view = hasLesson ? lessonView(museum.lesson, index) : null
+
+  const c = room.classroom
+  if (!c) throw new Error(`Classroom rendered for non-classroom room "${room.id}"`)
+  const f = wallFrame(room, c.front)
+  const yaw = wallYaw(f)
+  const b = layout.board
+  const s = layout.screen
+  // The desk in front of the spawn seat: buttons sit on its far half, towards the board.
+  const seat = layout.spawnSeat.position
+  const deskTop = CLASSROOM.desk.height
+  const toFront = [-f.normal[0], 0, -f.normal[2]] as const
+  const buttonsAt: [number, number, number] = [
+    seat[0] + toFront[0] * (CLASSROOM.chairBehind - 0.05),
+    deskTop + 0.045,
+    seat[2] + toFront[2] * (CLASSROOM.chairBehind - 0.05),
+  ]
+
+  return (
+    <group>
+      <mesh geometry={furniture} name={`classroom:${room.id}`}>
+        <meshBasicMaterial vertexColors />
+      </mesh>
+      {view && (
+        <>
+          <group
+            position={wallPoint(f, (b.u0 + b.u1) / 2, (b.v0 + b.v1) / 2, 0.024)}
+            rotation-y={yaw}
+          >
+            <Whiteboard area={b} note={view.board} />
+          </group>
+          <group
+            position={wallPoint(f, (s.u0 + s.u1) / 2, (s.v0 + s.v1) / 2, s.standoff + 0.004)}
+            rotation-y={yaw}
+          >
+            <ProjectionScreen area={s} content={view.screen} title={museum.title.tr} />
+          </group>
+          <group position={buttonsAt} rotation-y={yaw}>
+            <DeskButtons count={view.count} />
+          </group>
+          <LessonControls />
+        </>
+      )}
+    </group>
+  )
+}

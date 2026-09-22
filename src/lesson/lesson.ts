@@ -1,0 +1,42 @@
+import type { LessonDef, LessonSectionDef, LessonTextDef, LessonVideoDef } from '../schema/museum'
+
+export type ScreenContent =
+  { kind: 'video'; step: LessonVideoDef } | { kind: 'title'; section: LessonSectionDef }
+
+export type LessonView = {
+  index: number
+  count: number
+  section: LessonSectionDef
+  /** The latest note of the current section up to this step; notes never carry across sections. */
+  board: LessonTextDef | null
+  screen: ScreenContent
+}
+
+export function lessonView(lesson: LessonDef, index: number): LessonView {
+  const step = lesson.steps[index]
+  if (!step) {
+    throw new Error(`lesson step ${index} is out of range 0..${lesson.steps.length - 1}`)
+  }
+  const section = lesson.sections.find((s) => s.id === step.section)
+  if (!section) throw new Error(`lesson step "${step.id}" names unknown section "${step.section}"`)
+  let board: LessonTextDef | null = null
+  for (let i = index; i >= 0; i--) {
+    const s = lesson.steps[i]
+    if (!s || s.section !== step.section) break
+    if (s.type === 'text') {
+      board = s
+      break
+    }
+  }
+  return {
+    index,
+    count: lesson.steps.length,
+    section,
+    board,
+    screen: step.type === 'video' ? { kind: 'video', step } : { kind: 'title', section },
+  }
+}
+
+export function clampStep(index: number, delta: number, count: number): number {
+  return Math.max(0, Math.min(count - 1, index + delta))
+}

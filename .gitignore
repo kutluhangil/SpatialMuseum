@@ -1,0 +1,14 @@
+node_modules
+dist
+*.local
+.env
+.env.*.local
+.DS_Store
+
+# Media never goes into git; content/media/manifest.json tracks it instead.
+content/media/raw
+content/media/dist
+
+playwright-report
+test-results
+.playwright-mcp

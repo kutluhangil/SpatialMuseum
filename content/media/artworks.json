@@ -1,0 +1,83 @@
+[
+  {
+    "key": "artworks/cassatt-mother-and-child.ktx2",
+    "title": "Anne ve Çocuk",
+    "artist": "Mary Cassatt",
+    "year": "1884–1894",
+    "aspect": 0.8267,
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Mary_Cassatt_-_Mother_and_Child_-_Google_Art_Project.jpg"
+  },
+  {
+    "key": "artworks/cassatt-maternal-caress.ktx2",
+    "title": "Anne Şefkati",
+    "artist": "Mary Cassatt",
+    "year": "y. 1891",
+    "aspect": 0.741,
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Mary_Cassatt,_Maternal_Caress,_c._1891,_NGA_1068.jpg"
+  },
+  {
+    "key": "artworks/morisot-the-cradle.ktx2",
+    "title": "Beşik",
+    "artist": "Berthe Morisot",
+    "year": "1872",
+    "aspect": 0.8208,
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Berthe_Morisot_-_The_Cradle_-_Google_Art_Project.jpg"
+  },
+  {
+    "key": "artworks/renoir-mother-nursing.ktx2",
+    "title": "Çocuğunu Emziren Anne",
+    "artist": "Pierre-Auguste Renoir",
+    "year": "1885",
+    "aspect": 0.7793,
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Pierre-Auguste_Renoir_-_Mother_nursing_her_child.jpg"
+  },
+  {
+    "key": "artworks/cassatt-mother-feeding-child.ktx2",
+    "title": "Çocuğunu Besleyen Anne",
+    "artist": "Mary Cassatt",
+    "year": "1898",
+    "aspect": 1.2452,
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Mother_Feeding_Child_MET_DT5263.jpg"
+  },
+  {
+    "key": "artworks/cassatt-woman-with-child.ktx2",
+    "title": "Kucağında Çocukla Oturan Kadın",
+    "artist": "Mary Cassatt",
+    "year": "y. 1890",
+    "aspect": 0.8136,
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Mary_Cassatt_-_Woman_Sitting_with_a_Child_in_Her_Arms_-_Google_Art_Project.jpg"
+  },
+  {
+    "key": "artworks/cassatt-breakfast-in-bed.ktx2",
+    "title": "Yatakta Kahvaltı",
+    "artist": "Mary Cassatt",
+    "year": "1897",
+    "aspect": 1.2586,
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Breakfast_in_Bed_(1897)_by_Mary_Cassatt,_Huntington_Library.jpg"
+  },
+  {
+    "key": "artworks/cassatt-susan-comforting.ktx2",
+    "title": "Bebeği Avutan Susan",
+    "artist": "Mary Cassatt",
+    "year": "1881",
+    "aspect": 1.547,
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Mary_Cassatt_-_Susan_Comforting_the_Baby_-_Google_Art_Project.jpg"
+  },
+  {
+    "key": "artworks/cassatt-sleepy-child.ktx2",
+    "title": "Uykulu Çocuğunu Yıkamaya Hazırlanan Anne",
+    "artist": "Mary Cassatt",
+    "year": "1880",
+    "aspect": 0.6492,
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Mary_Cassatt_-_Mother_About_to_Wash_Her_Sleepy_Child_-_Google_Art_Project.jpg"
+  }
+]
