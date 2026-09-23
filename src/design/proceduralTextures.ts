@@ -168,47 +168,117 @@ let plaster: CanvasTexture | null = null
  */
 export const PLASTER_METRES = 2.5
 
+/** A deterministic random source, so every load (and every screenshot) draws the same texture. */
+function seeded(seed: number): () => number {
+  let state = seed
+  return () => {
+    state = (state * 16807) % 2147483647
+    return state / 2147483647
+  }
+}
+
+/**
+ * Tileable value noise in 0..1: a lattice of random values that wraps at the edges, smoothly
+ * interpolated, summed over octaves. Wrapping is what lets a repeating wall texture show no seam.
+ */
+function tileableNoise(size: number, cells: readonly number[], seed: number): Float32Array {
+  const rand = seeded(seed)
+  const out = new Float32Array(size * size)
+  let total = 0
+  cells.forEach((n, octave) => {
+    const amp = 1 / 2 ** octave
+    total += amp
+    const lattice = Array.from({ length: n * n }, () => rand())
+    const at = (i: number, j: number) => lattice[((j + n) % n) * n + ((i + n) % n)] ?? 0
+    for (let y = 0; y < size; y++) {
+      const fy = (y / size) * n
+      const j = Math.floor(fy)
+      const ty = fy - j
+      const sy = ty * ty * (3 - 2 * ty)
+      for (let x = 0; x < size; x++) {
+        const fx = (x / size) * n
+        const i = Math.floor(fx)
+        const tx = fx - i
+        const sx = tx * tx * (3 - 2 * tx)
+        const top = at(i, j) + (at(i + 1, j) - at(i, j)) * sx
+        const bottom = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * sx
+        out[y * size + x] = (out[y * size + x] ?? 0) + (top + (bottom - top) * sy) * amp
+      }
+    }
+  })
+  return out.map((v) => v / total)
+}
+
 /**
  * Painted plaster, one repeat covering PLASTER_METRES of wall: near-white, so multiplying a wall's
- * baked colour by it only breaks up the flatness. Fine speckle for the render, roller streaks and
- * the uneven patches a roller leaves behind.
+ * baked colour by it only breaks up the flatness. Soft mottling from the roller at two scales
+ * and a fine grain from the plaster under the paint, all tileable noise: no shape in it repeats
+ * or reads as a patch with an edge.
  */
 export function plasterTexture(): CanvasTexture {
-  plaster ??= canvasTexture(256, (ctx, s) => {
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, s, s)
-    // Broad, heavily blurred roller passes: visible as unevenness, never as stripes.
-    ctx.filter = `blur(${s * 0.09}px)`
-    for (let i = 0; i < 7; i++) {
-      const x = (i / 7) * s + Math.sin(i * 7.31) * s * 0.03
-      ctx.fillStyle = i % 2 === 0 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
-      ctx.fillRect(x, 0, s * 0.07, s)
+  plaster ??= canvasTexture(512, (ctx, s) => {
+    const mottle = tileableNoise(s, [3, 6, 12], 13)
+    const grain = tileableNoise(s, [128, 256], 29)
+    const img = ctx.createImageData(s, s)
+    for (let i = 0; i < s * s; i++) {
+      // About ±3 % of mottling and ±2 % of grain around a white a shade under full.
+      const v = 0.975 + ((mottle[i] ?? 0.5) - 0.5) * 0.12 + ((grain[i] ?? 0.5) - 0.5) * 0.08
+      const c = Math.round(Math.min(1, Math.max(0, v)) * 255)
+      img.data.set([c, c, c, 255], i * 4)
     }
-    // Patches where the roller left more paint than the pass beside it: a painted wall is never
-    // one tone, and a perfectly even one is the clearest sign of a rendered room.
-    for (let i = 0; i < 26; i++) {
-      const x = ((i * 97) % 256) * (s / 256)
-      const y = ((i * 151) % 256) * (s / 256)
-      ctx.fillStyle = i % 3 === 0 ? 'rgba(0,0,0,0.035)' : 'rgba(255,255,255,0.045)'
-      ctx.beginPath()
-      ctx.ellipse(x, y, s * 0.14, s * 0.09, i * 1.1, 0, Math.PI * 2)
-      ctx.fill()
-    }
-    ctx.filter = `blur(${s * 0.008}px)`
-    // Deterministic speckle: the same wall every load, so a screenshot can be compared.
-    let seed = 13
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647
-      return seed / 2147483647
-    }
-    for (let i = 0; i < 1400; i++) {
-      ctx.fillStyle = rand() < 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.06)'
-      ctx.fillRect(rand() * s, rand() * s, 1.5, 1.5)
-    }
+    ctx.putImageData(img, 0, 0)
   })
   plaster.wrapS = RepeatWrapping
   plaster.wrapT = RepeatWrapping
   return plaster
+}
+
+let wainscot: CanvasTexture | null = null
+
+/** Width of one laminate panel below the chair rail, and so of one repeat of its texture. */
+export const PANEL_METRES = 1.2
+
+/**
+ * High-pressure laminate wall panelling in an oak decor, one panel per repeat: near-white grain
+ * (the vertex colour carries the oak), a joint to the next panel along one edge, and the shade
+ * the chair rail casts along the top. The texture spans the full height of the panelling.
+ */
+export function wainscotTexture(): CanvasTexture {
+  wainscot ??= canvasTexture(512, (ctx, s) => {
+    const rand = seeded(41)
+    // Horizontal grain: long, gently waving streaks of lighter and darker wood.
+    const img = ctx.createImageData(s, s)
+    const figure = tileableNoise(s, [2, 4, 8], 5)
+    const phase = Array.from({ length: 6 }, () => rand() * Math.PI * 2)
+    for (let y = 0; y < s; y++) {
+      for (let x = 0; x < s; x++) {
+        const i = y * s + x
+        const wave = Math.sin((x / s) * Math.PI * 2 + (phase[0] ?? 0)) * 6
+        const band = Math.sin(
+          ((y + wave + (figure[i] ?? 0) * 40) / s) * Math.PI * 58 + (phase[1] ?? 0),
+        )
+        const fine = Math.sin(((y + wave * 0.5) / s) * Math.PI * 260 + (phase[2] ?? 0))
+        const v = 0.93 + band * 0.035 + fine * 0.012 + ((figure[i] ?? 0.5) - 0.5) * 0.08
+        const c = Math.round(Math.min(1, Math.max(0, v)) * 255)
+        img.data.set([c, c, c, 255], i * 4)
+      }
+    }
+    ctx.putImageData(img, 0, 0)
+    // The joint between panels: a dark 3 mm gap with a lit chamfer beside it.
+    ctx.fillStyle = 'rgba(40, 28, 16, 0.55)'
+    ctx.fillRect(0, 0, 2, s)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'
+    ctx.fillRect(2, 0, 1, s)
+    // Canvas row 0 is the top (uv v = 1 after the flip): the rail's shadow falls there.
+    const shade = ctx.createLinearGradient(0, 0, 0, s * 0.08)
+    shade.addColorStop(0, 'rgba(0, 0, 0, 0.18)')
+    shade.addColorStop(1, 'rgba(0, 0, 0, 0)')
+    ctx.fillStyle = shade
+    ctx.fillRect(0, 0, s, s * 0.08)
+  })
+  wainscot.wrapS = RepeatWrapping
+  wainscot.wrapT = RepeatWrapping
+  return wainscot
 }
 
 let ceilingTile: CanvasTexture | null = null

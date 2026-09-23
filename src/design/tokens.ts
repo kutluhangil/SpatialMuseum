@@ -9,7 +9,8 @@ export const palette = {
   ceviz: '#4A3326', // walnut print frames
   isik: '#FFF6E6', // warm fill light for PBR frames
   kirikBeyaz: '#ECE9E2', // classroom wall plaster
-  korumaBandi: '#C9CDCF', // scuff-proof paint on the lower wall
+  korumaBandi: '#C9CDCF', // pale grey: waste bin, disabled desk buttons
+  lambri: '#C8AA82', // oak-decor laminate panelling below the chair rail
   tavan: '#F1F1EE', // suspended ceiling tiles
   ledIsik: '#F5F8FF', // LED panel light
   laminat: '#D9CDB8', // desk tops, light beech laminate

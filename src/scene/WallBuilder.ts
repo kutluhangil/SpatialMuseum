@@ -157,25 +157,27 @@ function subdividedWall(
   dado: Color,
   height: number,
   panels: readonly Panel[],
-): BufferGeometry[] {
+): WallParts {
   const L = frame.length
-  // Half-metre steps along the wall: coarser than that and the panel wash turns into flat bands.
-  const us = cuts(r.u0, r.u1, [0.2, 0.45, 0.8, 1.2, L - 1.2, L - 0.8, L - 0.45, L - 0.2], 0.5)
+  // 30 cm steps along the wall and 35 cm up it: the baked light is interpolated between vertices,
+  // and any coarser grid shows the panel wash and daylight as rectangles on the plaster.
+  const us = cuts(r.u0, r.u1, [0.2, 0.45, 0.8, 1.2, L - 1.2, L - 0.8, L - 0.45, L - 0.2], 0.3)
   const vs = cuts(
     r.v0,
     r.v1,
     [0.2, 0.45, 0.75, CHAIR_RAIL.top, height - 1.6, height - 0.8, height - 0.35],
-    1.2,
+    0.35,
   )
-  const parts: BufferGeometry[] = []
+  const parts: WallParts = { plaster: [], wainscot: [] }
   for (let i = 0; i < us.length - 1; i++) {
     for (let j = 0; j < vs.length - 1; j++) {
       const u0 = us[i] ?? 0
       const u1 = us[i + 1] ?? 0
       const v0 = vs[j] ?? 0
       const v1 = vs[j + 1] ?? 0
-      // Quads never straddle the rail, so the dado tone changes with a crisp edge.
-      const tone = v1 <= CHAIR_RAIL.top + 1e-6 ? dado : base
+      // Quads never straddle the rail, so the panelling below it ends with a crisp edge.
+      const lower = v1 <= CHAIR_RAIL.top + 1e-6
+      const tone = lower ? dado : base
       const c = (u: number, v: number) => {
         const [wx, , wz] = wallPoint(frame, u, v)
         const wash = 1 + panelWash(panels, wx, wz, height - v)
@@ -183,8 +185,8 @@ function subdividedWall(
           .multiply(daylightColor(room, wx, wz, side))
           .multiplyScalar(wash)
       }
-      // UVs run in metres along the wall and up it, so the plaster never stretches or tiles twice.
-      parts.push(
+      // UVs run in metres along the wall and up it, so neither plaster nor panels ever stretch.
+      ;(lower ? parts.wainscot : parts.plaster).push(
         quad(
           wallPoint(frame, u0, v0),
           wallPoint(frame, u1, v0),
@@ -200,24 +202,37 @@ function subdividedWall(
   return parts
 }
 
-/** All four walls of a room merged into one geometry with baked light: one draw call per room. */
+type WallParts = { plaster: BufferGeometry[]; wainscot: BufferGeometry[] }
+
+/**
+ * All four walls of a room with baked light, in two merged meshes: the plaster above the chair
+ * rail and the laminate panelling below it, which carry different textures (one draw call each).
+ */
 export function buildRoomWalls(
   room: RoomDef,
   baseColor: string,
   dadoColor: string,
   light: RoomLight,
-): BufferGeometry {
-  const parts: BufferGeometry[] = []
+): { plaster: BufferGeometry; wainscot: BufferGeometry | null } {
+  const parts: WallParts = { plaster: [], wainscot: [] }
   const { panels } = ceilingGrid(room.rect)
   for (const side of SIDES) {
     const base = litColor(baseColor, light, SIDE_BRIGHTNESS[side])
     const dado = litColor(dadoColor, light, SIDE_BRIGHTNESS[side])
     const frame = wallFrame(room, side)
     for (const r of wallSegments(frame.length, room.height, roomOpenings(room, side))) {
-      parts.push(...subdividedWall(room, side, frame, r, base, dado, room.height, panels))
+      const wall = subdividedWall(room, side, frame, r, base, dado, room.height, panels)
+      parts.plaster.push(...wall.plaster)
+      parts.wainscot.push(...wall.wainscot)
     }
   }
-  return merge(parts, `walls of room "${room.id}"`)
+  return {
+    plaster: merge(parts.plaster, `walls of room "${room.id}"`),
+    wainscot:
+      parts.wainscot.length > 0
+        ? merge(parts.wainscot, `wall panelling of room "${room.id}"`)
+        : null,
+  }
 }
 
 /**

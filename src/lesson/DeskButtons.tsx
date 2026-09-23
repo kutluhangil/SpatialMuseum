@@ -4,11 +4,12 @@ import type { ThreeEvent } from '@react-three/fiber'
 import { palette } from '../design/tokens'
 import { fontUrls } from '../design/typography'
 import { useLessonStore } from './lessonStore'
-import { useUI } from '../i18n/strings'
+import { useUIBoth } from '../i18n/strings'
 
 // 16 × 7 cm at ~0.6 m from a seated eye: well over the 44 px touch-target equivalent.
 const BUTTON = { w: 0.16, h: 0.07 }
-const LABEL = 0.022
+// Two lines (both languages) inside the 7 cm button.
+const LABEL = 0.02
 
 function DeskButton({
   x,
@@ -49,6 +50,8 @@ function DeskButton({
         color={palette.murekkep}
         position-z={0.001}
         anchorY="middle"
+        textAlign="center"
+        lineHeight={1.1}
       >
         {label}
       </Text>
@@ -58,7 +61,7 @@ function DeskButton({
 
 /** Previous / Next on a small stand on the visitor's desk, tilted towards a seated eye. */
 export function DeskButtons({ count }: { count: number }) {
-  const t = useUI()
+  const t = useUIBoth()
   const index = useLessonStore((s) => s.index)
   const go = useLessonStore((s) => s.go)
   return (

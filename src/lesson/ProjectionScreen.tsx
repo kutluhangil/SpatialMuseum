@@ -9,12 +9,14 @@ import { mediaUrl } from '../media/mediaUrl'
 import { useVideoElement } from '../media/useVideoElement'
 import { videoManager } from '../media/VideoManager'
 import { BOARD_VIEW_DISTANCE } from './Whiteboard'
-import { useText } from '../i18n/localeStore'
+import { useBilingual } from '../i18n/localeStore'
+import type { Bilingual } from '../i18n/locale'
 
 /** Plays while mounted: a lesson video starts when its step comes up and stops when it leaves. */
 function ScreenVideo({ step, width }: { step: LessonVideoDef; width: number }) {
   const size = textSizes(BOARD_VIEW_DISTANCE)
-  const t = useText()
+  const say = useBilingual()
+  const caption = say(step.title)
   const { video, texture } = useVideoElement(mediaUrl(step.src), step.loop)
   useEffect(() => {
     videoManager.play(video).catch((err: unknown) => {
@@ -44,10 +46,15 @@ function ScreenVideo({ step, width }: { step: LessonVideoDef; width: number }) {
         textAlign="center"
         position={[0, -h / 2 - 0.08, 0.002]}
       >
-        {t(step.title)}
+        {captionText(caption)}
       </Text>
     </group>
   )
+}
+
+/** Both languages of a short caption, one per line. */
+function captionText(b: Bilingual): string {
+  return b.secondary ? `${b.primary}\n${b.secondary}` : b.primary
 }
 
 /** The projection screen: the current video, or the section's title slide between videos. */
@@ -58,13 +65,14 @@ export function ProjectionScreen({
 }: {
   area: WallArea
   content: ScreenContent
-  title: string
+  title: Bilingual
 }) {
   const width = area.u1 - area.u0
   const size = textSizes(BOARD_VIEW_DISTANCE)
-  const t = useText()
+  const say = useBilingual()
   if (content.kind === 'video')
     return <ScreenVideo key={content.step.id} step={content.step} width={width} />
+  const section = say(content.section.title)
   return (
     <group>
       <Text
@@ -74,9 +82,23 @@ export function ProjectionScreen({
         anchorY="bottom"
         maxWidth={width - 0.3}
         textAlign="center"
+        position-y={section.secondary ? size.body * 1.5 : 0}
       >
-        {t(content.section.title)}
+        {section.primary}
       </Text>
+      {section.secondary && (
+        <Text
+          font={fontUrls.regular}
+          fontSize={size.body}
+          color={palette.murekkep}
+          anchorY="bottom"
+          maxWidth={width - 0.3}
+          textAlign="center"
+          position-y={0.02}
+        >
+          {section.secondary}
+        </Text>
+      )}
       <mesh position-y={-0.08}>
         <planeGeometry args={[0.6, 0.02]} />
         <meshBasicMaterial color={palette.kolostrum} />
@@ -84,11 +106,13 @@ export function ProjectionScreen({
       <Text
         font={fontUrls.regular}
         fontSize={size.body}
+        lineHeight={1.3}
         color={palette.murekkep}
         anchorY="top"
+        textAlign="center"
         position-y={-0.16}
       >
-        {title}
+        {captionText(title)}
       </Text>
     </group>
   )

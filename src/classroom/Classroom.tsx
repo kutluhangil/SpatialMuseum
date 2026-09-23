@@ -7,7 +7,7 @@ import { RoomControls } from './RoomControls'
 import { buildClassroomFurniture, buildContactShadows } from './furniture'
 import { boardGhostTexture, softShadowTexture } from '../design/proceduralTextures'
 import { quality } from '../xr/device'
-import { useText } from '../i18n/localeStore'
+import { useBilingual } from '../i18n/localeStore'
 import { statsEnabled } from '../ui/desktop/perfStats'
 import { XRPerfPanel } from '../ui/XRPerfPanel'
 import { lessonView } from '../lesson/lesson'
@@ -42,7 +42,7 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
   useEffect(() => () => shadows.dispose(), [shadows])
   const sun = roomSun(room, CLASSROOM_LIGHT)
   const sheen = useMemo(() => probeReflection(roomProbe(room), FURNITURE_SHEEN), [room])
-  const t = useText()
+  const say = useBilingual()
   const index = useLessonStore((s) => s.index)
   const hasLesson = museum.lesson.steps.length > 0
   const view = hasLesson ? lessonView(museum.lesson, index) : null
@@ -127,7 +127,7 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
             position={wallPoint(f, (s.u0 + s.u1) / 2, (s.v0 + s.v1) / 2, s.standoff + 0.004)}
             rotation-y={yaw}
           >
-            <ProjectionScreen area={s} content={view.screen} title={t(museum.title)} />
+            <ProjectionScreen area={s} content={view.screen} title={say(museum.title)} />
           </group>
           <group position={buttonsAt} rotation-y={yaw}>
             <DeskButtons count={view.count} />

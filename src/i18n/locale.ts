@@ -14,3 +14,17 @@ export function initialLocale(search: string, stored: string | null, browser: st
 export function text(value: Localized, locale: Locale): string {
   return locale === 'en' ? (value.en ?? value.tr) : value.tr
 }
+
+/** A text in both languages: the chosen one first, the other beside it when the content has it. */
+export type Bilingual = { primary: string; secondary: string | null }
+
+/**
+ * Everything written in the room is read by students of both languages at once, so it carries
+ * both: the viewer's language leads, the other follows. No second line when a translation is
+ * missing or reads the same.
+ */
+export function bilingual(value: Localized, locale: Locale): Bilingual {
+  const primary = text(value, locale)
+  const other = text(value, locale === 'tr' ? 'en' : 'tr')
+  return { primary, secondary: value.en !== undefined && other !== primary ? other : null }
+}

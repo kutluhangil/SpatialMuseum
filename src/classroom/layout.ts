@@ -202,6 +202,9 @@ export function roomBlinds(room: RoomDef): Blind[] {
   })
 }
 
+// How far left of the board's edge the wall clock hangs.
+const CLOCK_BESIDE_BOARD = 1.1
+
 export function classroomLayout(room: RoomDef): ClassroomLayout {
   const c = room.classroom
   if (!c) throw new Error(`room "${room.id}" is not a classroom`)
@@ -273,7 +276,9 @@ export function classroomLayout(room: RoomDef): ClassroomLayout {
     standoff: S.standoff,
   }
   const projector = at((screen.u0 + screen.u1) / 2, 3.4, room.height - 0.45)
-  const clock = { u: (board.u0 + board.u1) / 2, v: Math.min(room.height - 0.45, board.v1 + 0.55) }
+  // The board now reaches the screen's top, so the clock hangs on the front wall beside it, at
+  // the height of the board's upper half, where every seat still sees it.
+  const clock = { u: board.u0 - Math.min(CLOCK_BESIDE_BOARD, board.u0 / 2), v: 2.35 }
 
   const radiators = room.windows.map((w) => ({ wall: w.wall, u: w.offset, width: w.width - 0.2 }))
   const back = OPPOSITE[c.front]

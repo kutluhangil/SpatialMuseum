@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Localized } from '../schema/museum'
-import { initialLocale, text, type Locale } from './locale'
+import { bilingual, initialLocale, text, type Bilingual, type Locale } from './locale'
 
 const STORAGE_KEY = 'dil'
 
@@ -40,4 +40,10 @@ export const useLocaleStore = create<LocaleState>((set, get) => ({
 export function useText(): (value: Localized) => string {
   const locale = useLocaleStore((s) => s.locale)
   return (value) => text(value, locale)
+}
+
+/** Reads the current locale and returns the reader for text written in the room, in both languages. */
+export function useBilingual(): (value: Localized) => Bilingual {
+  const locale = useLocaleStore((s) => s.locale)
+  return (value) => bilingual(value, locale)
 }

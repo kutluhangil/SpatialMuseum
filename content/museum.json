@@ -7,7 +7,7 @@
   "spawn": {
     "roomId": "derslik",
     "position": [0.9, 0, -1.85],
-    "yaw": 0.1904,
+    "yaw": 0.1318,
     "posture": "seated"
   },
   "rooms": [
@@ -166,7 +166,7 @@
       "placement": {
         "wall": "east",
         "u": 1.3,
-        "v": 1.62,
+        "v": 1.95,
         "width": 0.85
       },
       "src": "videos/emzirmeye-hazirlik.mp4",
@@ -186,7 +186,7 @@
       "placement": {
         "wall": "east",
         "u": 3.18,
-        "v": 1.62,
+        "v": 1.95,
         "width": 0.85
       },
       "src": "videos/emzirme-pozisyonlari.mp4",
@@ -206,7 +206,7 @@
       "placement": {
         "wall": "east",
         "u": 5.06,
-        "v": 1.62,
+        "v": 1.95,
         "width": 0.85
       },
       "src": "videos/dogru-kavrama.mp4",
@@ -226,7 +226,7 @@
       "placement": {
         "wall": "east",
         "u": 6.94,
-        "v": 1.62,
+        "v": 1.95,
         "width": 0.85
       },
       "src": "videos/sut-sagma.mp4",
@@ -246,7 +246,7 @@
       "placement": {
         "wall": "east",
         "u": 8.82,
-        "v": 1.62,
+        "v": 1.95,
         "width": 0.85
       },
       "src": "videos/bebek-bakimi.mp4",
@@ -266,7 +266,7 @@
       "placement": {
         "wall": "east",
         "u": 10.7,
-        "v": 1.62,
+        "v": 1.95,
         "width": 0.85
       },
       "src": "videos/emzirme-sorunlari.mp4",

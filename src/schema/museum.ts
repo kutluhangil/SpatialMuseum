@@ -13,11 +13,14 @@ export const CLASSROOM = {
   chairBehind: 0.55, // desk centre to chair centre
   sideMargin: 0.8, // minimum floor between the outer desks and the side walls
   backMargin: 0.35, // behind the last chair
-  board: { margin: 0.7, width: 4, bottom: 0.9, height: 1.2 },
+  // A two-panel lecture-hall board: its foot sits on the chair rail, its top lines up with the
+  // screen's, and it holds a note in both languages at the 5 m reading size.
+  board: { margin: 0.7, width: 5, bottom: 0.95, height: 2 },
   screen: { gap: 0.3, width: 3.6, bottom: 0.95, height: 2, margin: 1, standoff: 0.15 },
 } as const
 
-// The whiteboard shows a title plus two body lines read from ~5 m (35 dmm body text).
+// The whiteboard shows a note in both languages, each a title plus two body lines read from ~5 m
+// (35 dmm body text).
 export const BOARD_NOTE_MAX_CHARS = 90
 
 /** Front-wall length the board, the gap and the screen need. */
@@ -571,12 +574,15 @@ export const MuseumSchema = MuseumBase.superRefine((m, ctx) => {
       ctx.addIssue({ code: 'custom', path: [...path, 'id'], message: `duplicate id "${step.id}"` })
     }
     ids.add(step.id)
-    if (step.type === 'text' && step.body.tr.length > BOARD_NOTE_MAX_CHARS) {
-      ctx.addIssue({
-        code: 'custom',
-        path: [...path, 'body'],
-        message: `board notes fit two lines at 5 m: keep body.tr ≤ ${BOARD_NOTE_MAX_CHARS} characters`,
-      })
+    if (step.type === 'text') {
+      for (const lang of ['tr', 'en'] as const) {
+        if ((step.body[lang]?.length ?? 0) <= BOARD_NOTE_MAX_CHARS) continue
+        ctx.addIssue({
+          code: 'custom',
+          path: [...path, 'body', lang],
+          message: `board notes fit two lines at 5 m: keep body.${lang} ≤ ${BOARD_NOTE_MAX_CHARS} characters`,
+        })
+      }
     }
     const at = sectionIds.indexOf(step.section)
     if (at < 0) {

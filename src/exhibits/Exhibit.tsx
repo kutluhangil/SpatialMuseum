@@ -40,7 +40,7 @@ export function Exhibit({
         {detail === 'full' && exhibit.label && (
           <Label
             label={exhibit.label}
-            width={p.width}
+            width={p.width + frameBorder(exhibit) * 2}
             exhibitHeight={exhibitHeight(exhibit) + frameBorder(exhibit) * 2}
           />
         )}

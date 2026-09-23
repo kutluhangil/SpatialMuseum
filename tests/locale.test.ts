@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { initialLocale, text } from '../src/i18n/locale'
+import { bilingual, initialLocale, text } from '../src/i18n/locale'
 
 describe('initialLocale', () => {
   it('lets the URL decide first', () => {
@@ -20,6 +20,24 @@ describe('text', () => {
     expect(text({ tr: 'Merhaba', en: 'Hello' }, 'en')).toBe('Hello')
     expect(text({ tr: 'Merhaba' }, 'en')).toBe('Merhaba')
     expect(text({ tr: 'Merhaba', en: 'Hello' }, 'tr')).toBe('Merhaba')
+  })
+})
+
+describe('bilingual', () => {
+  it("leads with the viewer's language and follows with the other", () => {
+    expect(bilingual({ tr: 'Merhaba', en: 'Hello' }, 'tr')).toEqual({
+      primary: 'Merhaba',
+      secondary: 'Hello',
+    })
+    expect(bilingual({ tr: 'Merhaba', en: 'Hello' }, 'en')).toEqual({
+      primary: 'Hello',
+      secondary: 'Merhaba',
+    })
+  })
+
+  it('writes one line when there is no translation, or it reads the same', () => {
+    expect(bilingual({ tr: 'Merhaba' }, 'en')).toEqual({ primary: 'Merhaba', secondary: null })
+    expect(bilingual({ tr: 'Mary Cassatt', en: 'Mary Cassatt' }, 'tr').secondary).toBeNull()
   })
 })
 

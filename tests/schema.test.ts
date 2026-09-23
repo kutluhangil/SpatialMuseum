@@ -205,7 +205,7 @@ describe('classroom and lesson rules', () => {
       {
         id: 'c',
         name: { tr: 'C' },
-        rect: { x: 0, z: 0, width: 9.6, depth: 8 },
+        rect: { x: 0, z: 0, width: 10.6, depth: 8 },
         classroom: { front: 'north' },
         ...over,
       },
@@ -223,7 +223,7 @@ describe('classroom and lesson rules', () => {
 
   it('rejects a front wall too short for board and screen', () => {
     expect(messages(classroomMuseum({ rect: { x: 0, z: 0, width: 8, depth: 8 } }))).toContain(
-      'rooms.0.classroom.front: the north wall is 8 m; board and screen need 9.6 m',
+      'rooms.0.classroom.front: the north wall is 8 m; board and screen need 10.6 m',
     )
   })
 
@@ -269,12 +269,17 @@ describe('classroom and lesson rules', () => {
         {},
         {
           sections: [{ id: 's', title: { tr: 'S' } }],
-          steps: [{ id: 'x', section: 's', type: 'text', body: { tr: 'a'.repeat(91) } }],
+          steps: [
+            { id: 'x', section: 's', type: 'text', body: { tr: 'a'.repeat(91), en: 'b' } },
+            { id: 'y', section: 's', type: 'text', body: { tr: 'a', en: 'b'.repeat(91) } },
+          ],
         },
       ),
     )
+    // Both languages share the board, so each has to fit.
     expect(msgs).toEqual([
-      'lesson.steps.0.body: board notes fit two lines at 5 m: keep body.tr ≤ 90 characters',
+      'lesson.steps.0.body.tr: board notes fit two lines at 5 m: keep body.tr ≤ 90 characters',
+      'lesson.steps.1.body.en: board notes fit two lines at 5 m: keep body.en ≤ 90 characters',
     ])
   })
 

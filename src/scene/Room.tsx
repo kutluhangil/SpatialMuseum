@@ -5,17 +5,25 @@ import { TeleportTarget } from '@react-three/xr'
 import type { ExhibitDef, RoomDef } from '../schema/museum'
 import { palette } from '../design/tokens'
 import {
+  PANEL_METRES,
   PLASTER_METRES,
   ceilingTileTexture,
   glassTexture,
   plasterTexture,
+  wainscotTexture,
   softShadowTexture,
 } from '../design/proceduralTextures'
 import { CLASSROOM_LIGHT } from '../design/light'
 import { useKTX2 } from '../media/useKTX2'
 import { usePlayerStore } from '../locomotion/playerStore'
 import { resolveCircle } from '../locomotion/collision'
-import { buildFrameShadows, buildRoomTrim, buildRoomWalls, buildWindowGlass } from './WallBuilder'
+import {
+  CHAIR_RAIL,
+  buildFrameShadows,
+  buildRoomTrim,
+  buildRoomWalls,
+  buildWindowGlass,
+} from './WallBuilder'
 import { FLOOR_TILE_METRES, buildCeiling, buildCeilingPanels, buildFloor } from './Surfaces'
 import { probeCacheKey, probeReflection, roomProbe, type Reflective } from './roomProbe'
 import { PROBE_GAIN, RoomProbeCapture } from './RoomProbeCapture'
@@ -38,6 +46,14 @@ const FLOOR_REFLECTION: Reflective = {
   strength: 1.5,
   lod: 1.5,
   normal: 'floor',
+  mode: 'opaque',
+}
+// Satin laminate below the rail: the windows and panels show in it only looking along the wall.
+const PANEL_SHEEN: Reflective = {
+  f0: 0.03,
+  strength: 0.8,
+  lod: 2.4,
+  normal: 'mesh',
   mode: 'opaque',
 }
 // Float glass: faint straight on, a clear mirror of the room at a slant.
@@ -69,7 +85,7 @@ export function Room({ room, exhibits }: RoomProps) {
   const wallColor = palette[room.wallTone]
   const baseboardColor = `#${new Color(wallColor).multiplyScalar(0.58).getHexString()}`
   const walls = useMemo(
-    () => buildRoomWalls(room, wallColor, palette.korumaBandi, light),
+    () => buildRoomWalls(room, wallColor, palette.lambri, light),
     [room, wallColor, light],
   )
   const trim = useMemo(
@@ -83,12 +99,22 @@ export function Room({ room, exhibits }: RoomProps) {
   const probe = roomProbe(room)
   const floorReflection = useMemo(() => probeReflection(probe, FLOOR_REFLECTION), [probe])
   const windowReflection = useMemo(() => probeReflection(probe, WINDOW_REFLECTION), [probe])
+  const panelReflection = useMemo(() => probeReflection(probe, PANEL_SHEEN), [probe])
   const lightsOn = useRoomStore((s) => s.lightsOn)
   const glass = useMemo(() => buildWindowGlass(room), [room])
   const shadows = useMemo(() => buildFrameShadows(room, exhibits), [room, exhibits])
   useEffect(
     () => () => {
-      for (const g of [walls, trim, floor, ceiling, panels, glass, shadows]) {
+      for (const g of [
+        walls.plaster,
+        walls.wainscot,
+        trim,
+        floor,
+        ceiling,
+        panels,
+        glass,
+        shadows,
+      ]) {
         g?.dispose()
       }
     },
@@ -109,6 +135,13 @@ export function Room({ room, exhibits }: RoomProps) {
     t.anisotropy = maxAnisotropy
     return t
   }, [maxAnisotropy])
+  const panelMap = useMemo(() => {
+    const t = wainscotTexture()
+    // One repeat per panel along the wall, and exactly the panelling's height up it.
+    t.repeat.set(1 / PANEL_METRES, 1 / CHAIR_RAIL.top)
+    t.anisotropy = maxAnisotropy
+    return t
+  }, [maxAnisotropy])
   const ceilingMap = useMemo(() => {
     const t = ceilingTileTexture()
     // Ceiling tiles are seen at grazing angles from a seat, like the floor.
@@ -119,9 +152,19 @@ export function Room({ room, exhibits }: RoomProps) {
   return (
     <group name={`room:${room.id}`}>
       {/* Unlit: light is baked into vertex colours (PLAN §8.4), which also keeps Quest fill cost low. */}
-      <mesh geometry={walls}>
+      <mesh geometry={walls.plaster}>
         <meshBasicMaterial map={wallMap} vertexColors />
       </mesh>
+      {walls.wainscot && (
+        <mesh geometry={walls.wainscot}>
+          <meshBasicMaterial
+            map={panelMap}
+            vertexColors
+            onBeforeCompile={panelReflection}
+            customProgramCacheKey={() => probeCacheKey(PANEL_SHEEN)}
+          />
+        </mesh>
+      )}
       <mesh geometry={trim}>
         <meshBasicMaterial vertexColors />
       </mesh>

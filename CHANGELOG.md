@@ -2,6 +2,12 @@
 
 Newest entries at the top.
 
+## 2026-09-24
+- Everything written in the classroom is bilingual at once: the board note, the screen's title slide and captions, every placard and the desk buttons show the viewer's language first and the other one under it (the language button picks which leads).
+- The whiteboard is a 5 × 2 m lecture-hall board, its top level with the screen's, holding both languages of a note at the 5 m reading size; the wall clock moved beside it. Board notes are now checked to fit in both languages.
+- The framed videos hang higher (centre at 1.95 m), and their placards are mounted cards as wide as the frame, with a thickness lit from above.
+- Walls: oak-decor laminate panelling below the chair rail (panel joints, grain, the rail's shadow, a satin sheen), seamless noise-based plaster above it, and the baked light sampled four times finer so it no longer shows as rectangles.
+
 ## 2026-09-23
 - The wall screens hang like paintings: a gilt moulding (lofted from a real cross-section, with grime in the coves and bright crests), a bevel-cut passepartout, reflective glazing and a brass picture light above each, throwing a warm pool down the wall. The paintings between the windows got proper moulded profiles and picture lights too. Frames, mats, glass and light pools are one mesh each for the whole room.
 - Real reflections: the room is captured into an HDR cube map (a reflection probe) after loading and whenever the lights or blinds change, and surfaces look it up box-projected, so reflections stay where they belong. The tiled floor shows the ceiling panels and windows, window and picture glass show the room, desk tops and seats catch a sheen, and the gilt and brass reflect this classroom instead of a generic studio.

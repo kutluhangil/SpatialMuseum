@@ -26,3 +26,13 @@ export function useUI(): (key: UIKey) => string {
   const locale = useLocaleStore((s) => s.locale)
   return (key) => ui(key, locale)
 }
+
+/**
+ * Interface words written in the room (desk buttons): both languages, the viewer's first, one per
+ * line, as every other text in the class is.
+ */
+export function useUIBoth(): (key: UIKey) => string {
+  const locale = useLocaleStore((s) => s.locale)
+  const other: Locale = locale === 'tr' ? 'en' : 'tr'
+  return (key) => `${ui(key, locale)}\n${ui(key, other)}`
+}
