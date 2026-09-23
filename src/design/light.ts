@@ -8,7 +8,7 @@ export type RoomLight = {
   tint: number
   /** Overall brightness of walls and ceiling. */
   exposure: number
-  /** Opacity of the additive sun patches under windows. */
+  /** Strength of the sunlight through the windows, on surfaces facing it (0 = overcast). */
   sun: number
 }
 
@@ -17,5 +17,5 @@ export const CLASSROOM_LIGHT: RoomLight = {
   light: palette.ledIsik,
   tint: 0.05,
   exposure: 1,
-  sun: 0.3,
+  sun: 0.75,
 }

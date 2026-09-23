@@ -12,7 +12,7 @@ import {
 import type { RoomLight } from '../design/light'
 import { daylightColor } from './bakedLight'
 import { ceilingGrid } from './ceilingGrid'
-import { FRAME_PROFILE, FRAME_SHADOW } from '../exhibits/frameSpec'
+import { FRAME_SHADOW, frameBorder } from '../exhibits/frameSpec'
 import {
   wallFrame,
   wallPoint,
@@ -34,9 +34,7 @@ const BASEBOARD_DEPTH = 0.018
 // Depths stay under the 2 cm exhibit offset so placards always sit in front.
 export const CHAIR_RAIL = { bottom: 0.88, top: 0.94, depth: 0.018 }
 const CEILING_ANGLE = { height: 0.03, depth: 0.02 }
-const WINDOW = { reveal: 0.25, casing: 0.06, casingDepth: 0.04, sillDepth: 0.12, bar: 0.045 }
-// How far a window's reflection reaches into the room, and how much wider than the window it is.
-const GLARE = { reach: 2.6, spread: 1.15 }
+export const WINDOW = { reveal: 0.25, casing: 0.06, casingDepth: 0.04, sillDepth: 0.12, bar: 0.045 }
 
 // Fake key light from the north-east: each wall orientation gets a fixed brightness so corners
 // stay readable without runtime lighting (PLAN §8.4, "baked light at zero cost").
@@ -579,43 +577,13 @@ export function buildSunPatches(room: RoomDef, covered: number[] = []): BufferGe
   return merge(parts, `sun patches of room "${room.id}"`)
 }
 
-/**
- * Reflections of the windows in the polished floor: one smear per window, lying against its wall
- * and stretching into the room. Additive and flat, where a real mirror would draw the room twice.
- */
-export function buildWindowGlare(room: RoomDef): BufferGeometry | null {
-  const parts: BufferGeometry[] = []
-  const y = 0.006
-  for (const win of room.windows) {
-    const f = wallFrame(room, win.wall)
-    const half = (win.width * GLARE.spread) / 2
-    const u0 = win.offset - half
-    const u1 = win.offset + half
-    const far = GLARE.reach
-    // Corner order puts the bright end of the texture (v = 1) against the wall.
-    parts.push(
-      withUv(
-        quad(
-          wallPoint(f, u0, y, far),
-          wallPoint(f, u1, y, far),
-          wallPoint(f, u1, y, 0.02),
-          wallPoint(f, u0, y, 0.02),
-          [0, 1, 0],
-        ),
-      ),
-    )
-  }
-  if (parts.length === 0) return null
-  return merge(parts, `window glare of room "${room.id}"`)
-}
-
-/** Soft drop shadows behind every framed painting in the room, merged into one mesh. */
+/** Soft drop shadows behind every framed painting and screen in the room, merged into one mesh. */
 export function buildFrameShadows(room: RoomDef, exhibits: ExhibitDef[]): BufferGeometry | null {
   const parts: BufferGeometry[] = []
   for (const ex of exhibits) {
-    if (ex.type !== 'image' || (ex.frame !== 'wood' && ex.frame !== 'black')) continue
+    const border = frameBorder(ex)
+    if (border === 0) continue
     const f = wallFrame(room, ex.placement.wall)
-    const border = FRAME_PROFILE[ex.frame]
     const w = ex.placement.width + border * 2 + FRAME_SHADOW.spreadX
     const h = exhibitHeight(ex) + border * 2 + FRAME_SHADOW.spreadY
     const u = ex.placement.u + FRAME_SHADOW.offsetU

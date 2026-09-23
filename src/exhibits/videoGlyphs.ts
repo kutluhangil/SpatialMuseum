@@ -1,4 +1,4 @@
-import { BufferGeometry, Float32BufferAttribute } from 'three'
+import { BufferGeometry, Float32BufferAttribute, Path, Shape, ShapeGeometry } from 'three'
 
 /** One rectangle's corners appended to a flat quad soup, with its own two triangles. */
 function pushRect(pos: number[], idx: number[], cx: number, w: number, h: number): void {
@@ -58,4 +58,22 @@ export function clockText(seconds: number): string {
   const total = Math.floor(seconds)
   const mins = Math.floor(total / 60)
   return `${mins}:${String(total - mins * 60).padStart(2, '0')}`
+}
+
+/**
+ * The "press me" badge over an unplayed screen: a dark disc with the play triangle cut out of it,
+ * so the still shows through the triangle. One mesh, where a disc and a triangle would be two.
+ */
+export function playBadge(radius: number): ShapeGeometry {
+  const disc = new Shape().absarc(0, 0, radius, 0, Math.PI * 2, false)
+  const r = radius * 0.46
+  // Shifted right by a sixth of its size, the triangle's mass sits on the disc's centre.
+  const shift = r * 0.18
+  const hole = new Path()
+  hole.moveTo(r + shift, 0)
+  hole.lineTo(-r / 2 + shift, (r * Math.sqrt(3)) / 2)
+  hole.lineTo(-r / 2 + shift, (-r * Math.sqrt(3)) / 2)
+  hole.closePath()
+  disc.holes.push(hole)
+  return new ShapeGeometry(disc, 48)
 }

@@ -2,7 +2,6 @@ import type { ExhibitDef } from '../schema/museum'
 import { palette } from '../design/tokens'
 import { mediaUrl } from '../media/mediaUrl'
 import { useKTX2 } from '../media/useKTX2'
-import { PictureFrame } from './PictureFrame'
 
 type ImageDef = Extract<ExhibitDef, { type: 'image' }>
 
@@ -19,19 +18,12 @@ export function ImageExhibit({ exhibit }: { exhibit: ImageDef }) {
   const frame = exhibit.frame
   return (
     <group>
-      {frame === 'wood' || frame === 'black' ? (
-        <PictureFrame width={width} height={height} style={frame} />
-      ) : (
-        FLAT_BORDER[frame] > 0 && (
-          <mesh position-z={-0.004}>
-            <planeGeometry
-              args={[width + FLAT_BORDER[frame] * 2, height + FLAT_BORDER[frame] * 2]}
-            />
-            <meshBasicMaterial
-              color={frame === 'passepartout' ? palette.onsut : palette.murekkep}
-            />
-          </mesh>
-        )
+      {/* Moulded frames are drawn by the room, merged with the others (ExhibitFrames). */}
+      {frame !== 'wood' && frame !== 'black' && FLAT_BORDER[frame] > 0 && (
+        <mesh position-z={-0.004}>
+          <planeGeometry args={[width + FLAT_BORDER[frame] * 2, height + FLAT_BORDER[frame] * 2]} />
+          <meshBasicMaterial color={frame === 'passepartout' ? palette.onsut : palette.murekkep} />
+        </mesh>
       )}
       <mesh>
         <planeGeometry args={[width, height]} />

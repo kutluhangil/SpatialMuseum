@@ -15,10 +15,16 @@ export type Quality = {
   targetFrameRate: number
   /** Cap on texture anisotropy: sharp floors are worth little if the frame is late. */
   anisotropy: number
-  /** Big additive smear of the windows on the floor: pure fill cost. */
-  floorGlare: boolean
+  /** Reflective glazing over the framed screens: a transparent pass over every screen. */
+  screenGlass: boolean
   /** Faint wiped-marker layer over the whiteboard: an extra transparent pass across the board. */
   boardGhost: boolean
+  /** Warm pools the picture lights throw on the walls: additive quads, a few square metres each. */
+  pictureLights: boolean
+  /** Sunlight on the desks and chairs: the whole furniture mesh drawn a second time, additively. */
+  sunOnFurniture: boolean
+  /** Shafts of sunlight in the air: large transparent faces, seen through twice. */
+  sunShafts: boolean
 }
 
 const QUALITY: Record<DeviceTier, Quality> = {
@@ -28,32 +34,44 @@ const QUALITY: Record<DeviceTier, Quality> = {
     foveation: 1,
     targetFrameRate: 72,
     anisotropy: 4,
-    floorGlare: false,
+    screenGlass: false,
     boardGhost: false,
+    pictureLights: false,
+    sunOnFurniture: false,
+    sunShafts: false,
   },
   quest3: {
     framebufferScale: 1.25,
     foveation: 0.75,
     targetFrameRate: 90,
     anisotropy: 8,
-    floorGlare: true,
+    screenGlass: true,
     boardGhost: true,
+    pictureLights: true,
+    sunOnFurniture: true,
+    sunShafts: true,
   },
   questpro: {
     framebufferScale: 1.2,
     foveation: 0.8,
     targetFrameRate: 90,
     anisotropy: 8,
-    floorGlare: true,
+    screenGlass: true,
     boardGhost: true,
+    pictureLights: true,
+    sunOnFurniture: true,
+    sunShafts: true,
   },
   desktop: {
     framebufferScale: 1.25,
     foveation: 0.5,
     targetFrameRate: 90,
     anisotropy: 16,
-    floorGlare: true,
+    screenGlass: true,
     boardGhost: true,
+    pictureLights: true,
+    sunOnFurniture: true,
+    sunShafts: true,
   },
 }
 

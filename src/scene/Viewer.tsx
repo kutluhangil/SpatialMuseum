@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { PCFShadowMap } from 'three'
 import { XR } from '@react-three/xr'
 import { xrStore } from '../xr/xrStore'
 import { XRFrameRate } from '../xr/XRFrameRate'
@@ -26,6 +27,8 @@ export function Viewer({ children }: { children: ReactNode }) {
         // MSAA is cheap on the tiled mobile GPUs in a Quest; the stencil buffer is pure bandwidth.
         gl={{ antialias: true, stencil: false, powerPreference: 'high-performance' }}
         style={{ touchAction: 'none' }}
+        // The sun's shadow map is redrawn on demand (Sunlight), never per frame: the room is still.
+        shadows={{ enabled: true, type: PCFShadowMap, autoUpdate: false }}
       >
         <color attach="background" args={[palette.onsut]} />
         <XR store={xrStore}>

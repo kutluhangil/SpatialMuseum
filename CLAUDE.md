@@ -24,7 +24,11 @@ reduced-motion, ≥ 7:1 metin kontrastı.
 - `localStorage` erişimleri `try/catch` içinde.
 - Uygulama kullanım verisi toplamaz: analitik, izleyici ya da üçüncü taraf script ekleme.
 - Oda yüzeyleri ışıksız (`meshBasicMaterial`); ışık `WallBuilder.ts` / `Surfaces.ts`'te vertex rengine pişirilir.
-  PBR (`meshStandardMaterial`) yalnız baskı çerçevelerinde; ortam yansıması `EnvironmentLight` (yerel RoomEnvironment).
+  PBR (`meshStandardMaterial`) yalnız çerçeve/lamba birleşik mesh'inde (`src/exhibits/ExhibitFrames.tsx`); ortamı oda sondası verir.
+- Yansımalar yalnız oda sondası üzerinden (`src/scene/roomProbe.ts` + `RoomProbeCapture.tsx`): HDR küp harita yüklemeden sonra
+  ve ışık/perde değişince yakalanır, asla her karede değil. Mobilya gibi yanlış yerde yansıyacak nesnelere `HIDE_FROM_PROBE`.
+- Güneş `src/scene/sun.ts` (yön, pencere izdüşümü) + `sunShader.ts` (pencereden geri izleme, gölge maskesi). Gölge haritası
+  `autoUpdate: false`; yeni gölge düşüren nesne eklenince `gl.shadowMap.needsUpdate` tetiklenmeli.
 - Draw call bütçesi: klasik WebGLRenderer'da multiview yok; VR'da her draw call iki kez çizilir. Yeni görsel öğe eklerken oda başına birleştir (merge) ve `?stats` ile ölç. İki kapı ötesindeki odalar `detail: 'far'` (tek derslikte etkisiz).
 - Sınıf mobilyası `src/classroom/layout.ts` (saf yerleşim) + `furniture.ts` (tek birleşik mesh); yeni parça oraya eklenir.
 - Sınıftaki izleyici kitlesi öğrenciler (proje başındaki "anneler" kurgusu geçersiz); metinler öğrencilere hitap eder.

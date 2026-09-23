@@ -33,6 +33,12 @@ export const palette = {
   kundak: '#DCE6EC', // swaddle and blankets
   sut: '#FAF7F0', // expressed milk in the demo bottles
   hasir: '#C6B293', // bassinet basket
+  // Gallery hanging: the video screens are framed and lit like paintings.
+  yaldiz: '#D8B46E', // gilt moulding (metallic reflectance, so lighter than it reads)
+  pirinc: '#C29A5B', // brass picture lights
+  paspartu: '#F0EADC', // passepartout mat around a framed screen
+  lambaIsik: '#FFE2B0', // warm wash of a picture light
+  gunes: '#FFE4BC', // afternoon sun through the windows
 } as const
 
 export type WallTone = 'kirikBeyaz'

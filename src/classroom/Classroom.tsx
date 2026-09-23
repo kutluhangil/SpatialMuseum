@@ -17,6 +17,21 @@ import { ProjectionScreen } from '../lesson/ProjectionScreen'
 import { DeskButtons } from '../lesson/DeskButtons'
 import { LessonControls } from '../lesson/LessonControls'
 import { CLASSROOM } from '../schema/museum'
+import { HIDE_FROM_PROBE } from '../scene/RoomProbeCapture'
+import { roomSun } from '../scene/Sunlight'
+import { probeCacheKey, probeReflection, roomProbe, type Reflective } from '../scene/roomProbe'
+import { CLASSROOM_LIGHT } from '../design/light'
+
+// Laminate desk tops and moulded seats have a faint gloss: straight on nothing, at a slant the
+// windows and ceiling panels show in them, blurred.
+const FURNITURE_SHEEN: Reflective = {
+  f0: 0.035,
+  strength: 1,
+  lod: 2.6,
+  normal: 'mesh',
+  mode: 'opaque',
+  faces: 'tops',
+}
 
 /** Everything that makes the room a classroom: merged furniture plus the lesson on board and screen. */
 export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
@@ -25,6 +40,8 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
   useEffect(() => () => furniture.dispose(), [furniture])
   const shadows = useMemo(() => buildContactShadows(room, layout), [room, layout])
   useEffect(() => () => shadows.dispose(), [shadows])
+  const sun = roomSun(room, CLASSROOM_LIGHT)
+  const sheen = useMemo(() => probeReflection(roomProbe(room), FURNITURE_SHEEN), [room])
   const t = useText()
   const index = useLessonStore((s) => s.index)
   const hasLesson = museum.lesson.steps.length > 0
@@ -48,9 +65,30 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
 
   return (
     <group>
-      <mesh geometry={furniture} name={`classroom:${room.id}`}>
-        <meshBasicMaterial vertexColors />
+      {/* Left out of the reflection probe: it would reflect at the walls, not under the desks. */}
+      <mesh
+        geometry={furniture}
+        name={`classroom:${room.id}`}
+        userData={{ [HIDE_FROM_PROBE]: true }}
+        castShadow
+      >
+        <meshBasicMaterial
+          vertexColors
+          onBeforeCompile={sheen}
+          customProgramCacheKey={() => probeCacheKey(FURNITURE_SHEEN)}
+        />
       </mesh>
+      {/* The same mesh again, carrying only the sun: desks and chairs in a beam light up and
+          shade each other. On a Quest 2 the sun stays on the floor. */}
+      {sun && quality.sunOnFurniture && (
+        <mesh
+          geometry={furniture}
+          material={sun.material}
+          receiveShadow
+          renderOrder={2}
+          userData={{ [HIDE_FROM_PROBE]: true }}
+        />
+      )}
       {/* Grounds every desk and chair: without it the furniture seems to float on the tiles. */}
       <mesh geometry={shadows} renderOrder={1}>
         <meshBasicMaterial

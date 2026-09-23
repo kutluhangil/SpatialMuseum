@@ -22,12 +22,13 @@ export function LoadingOverlay() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none absolute inset-0 grid place-items-center bg-[var(--onsut)] transition-opacity duration-500"
+      className="pointer-events-none absolute inset-0 grid place-items-center bg-[radial-gradient(ellipse_at_center,var(--isik)_0%,var(--onsut)_70%)] transition-opacity duration-500"
       style={{ opacity: active ? 1 : 0 }}
     >
       <div className="flex flex-col items-center gap-4 text-[var(--murekkep)]">
-        <p className="text-xl font-semibold">{t('loading')}</p>
-        <div className="h-2 w-64 overflow-hidden rounded-full bg-[var(--murekkep)]/15">
+        <div aria-hidden className="h-[3px] w-12 rounded-full bg-[var(--kolostrum)]" />
+        <p className="text-xl font-semibold tracking-wide">{t('loading')}</p>
+        <div className="h-1.5 w-64 overflow-hidden rounded-full bg-[var(--murekkep)]/12">
           <div
             className="h-full rounded-full bg-[var(--murekkep)] transition-[width] duration-300"
             style={{ width: `${Math.round(progress)}%` }}

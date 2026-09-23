@@ -7,6 +7,7 @@ import { VideoScreen } from './VideoScreen'
 import { ImageExhibit } from './ImageExhibit'
 import { TextPanel } from './TextPanel'
 import { Label } from './Label'
+import { frameBorder } from './frameSpec'
 
 /** Places one exhibit on its wall and draws it by type. */
 export function Exhibit({
@@ -37,7 +38,11 @@ export function Exhibit({
         {exhibit.type === 'image' && <ImageExhibit exhibit={exhibit} />}
         {exhibit.type === 'text' && <TextPanel exhibit={exhibit} withText={detail === 'full'} />}
         {detail === 'full' && exhibit.label && (
-          <Label label={exhibit.label} width={p.width} exhibitHeight={exhibitHeight(exhibit)} />
+          <Label
+            label={exhibit.label}
+            width={p.width}
+            exhibitHeight={exhibitHeight(exhibit) + frameBorder(exhibit) * 2}
+          />
         )}
       </Suspense>
     </group>

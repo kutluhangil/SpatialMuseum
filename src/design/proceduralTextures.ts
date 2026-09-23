@@ -38,25 +38,92 @@ export function softShadowTexture(): CanvasTexture {
   return softShadow
 }
 
-let sunPatch: CanvasTexture | null = null
+let sunShaft: CanvasTexture | null = null
 
 /**
- * Soft-edged window-shaped patch of sunlight, with the shadow of the glazing bars (one upright,
- * one transom) crossing it. Additive: black = no light.
+ * A face of a sunbeam hanging in the air: strongest near the window and thinning towards the
+ * floor, soft along both long edges, with faint streaks of drifting dust. Additive: black adds
+ * nothing. Canvas row 0 is the window end (uv v = 0 there, so the texture is flipped).
  */
-export function sunPatchTexture(): CanvasTexture {
-  sunPatch ??= canvasTexture(256, (ctx, s) => {
+export function sunShaftTexture(): CanvasTexture {
+  sunShaft ??= canvasTexture(128, (ctx, s) => {
     ctx.fillStyle = '#000'
     ctx.fillRect(0, 0, s, s)
-    ctx.filter = `blur(${s * 0.035}px)`
-    ctx.fillStyle = '#fff'
-    const m = s * 0.1
-    ctx.fillRect(m, m, s - m * 2, s - m * 2)
+    const along = ctx.createLinearGradient(0, 0, 0, s)
+    along.addColorStop(0, '#ffffff')
+    along.addColorStop(0.55, '#707070')
+    along.addColorStop(1, '#000000')
+    ctx.fillStyle = along
+    ctx.fillRect(0, 0, s, s)
+    // Dust: a few lighter and darker streaks running down the beam.
+    let seed = 11
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647
+      return seed / 2147483647
+    }
+    ctx.filter = `blur(${s * 0.02}px)`
+    for (let i = 0; i < 14; i++) {
+      ctx.fillStyle = rand() > 0.5 ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.22)'
+      ctx.fillRect(rand() * s, 0, s * (0.02 + rand() * 0.05), s)
+    }
+    ctx.filter = 'none'
+    ctx.globalCompositeOperation = 'destination-in'
+    const across = ctx.createLinearGradient(0, 0, s, 0)
+    across.addColorStop(0, 'rgba(0,0,0,0)')
+    across.addColorStop(0.2, 'rgba(0,0,0,1)')
+    across.addColorStop(0.8, 'rgba(0,0,0,1)')
+    across.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = across
+    ctx.fillRect(0, 0, s, s)
+    ctx.globalCompositeOperation = 'destination-over'
     ctx.fillStyle = '#000'
-    ctx.fillRect(s / 2 - s * 0.02, 0, s * 0.04, s)
-    ctx.fillRect(0, s * 0.36, s, s * 0.04)
+    ctx.fillRect(0, 0, s, s)
   })
-  return sunPatch
+  sunShaft.flipY = false
+  return sunShaft
+}
+
+let pictureWash: CanvasTexture | null = null
+
+/**
+ * The pool of light a picture lamp throws down a wall: brightest just under the hood, spreading
+ * and fading towards the floor, with soft sides. Additive, so black adds nothing. Canvas row 0 is
+ * the lamp end (uv v = 1).
+ */
+export function pictureWashTexture(): CanvasTexture {
+  pictureWash ??= canvasTexture(128, (ctx, s) => {
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, s, s)
+    const glow = ctx.createRadialGradient(s / 2, s * 0.14, 0, s / 2, s * 0.14, s * 0.85)
+    glow.addColorStop(0, '#ffffff')
+    glow.addColorStop(0.3, '#9a9a9a')
+    glow.addColorStop(0.7, '#262626')
+    glow.addColorStop(1, '#000000')
+    ctx.fillStyle = glow
+    ctx.fillRect(0, 0, s, s)
+    // Every edge fades to black, so the quad itself never shows on the wall. The top fades
+    // fastest: the hood cuts the light off above itself.
+    ctx.globalCompositeOperation = 'destination-in'
+    const across = ctx.createLinearGradient(0, 0, s, 0)
+    across.addColorStop(0, 'rgba(0,0,0,0)')
+    across.addColorStop(0.3, 'rgba(0,0,0,1)')
+    across.addColorStop(0.7, 'rgba(0,0,0,1)')
+    across.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = across
+    ctx.fillRect(0, 0, s, s)
+    const down = ctx.createLinearGradient(0, 0, 0, s)
+    down.addColorStop(0, 'rgba(0,0,0,0)')
+    down.addColorStop(0.12, 'rgba(0,0,0,1)')
+    down.addColorStop(0.75, 'rgba(0,0,0,1)')
+    down.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = down
+    ctx.fillRect(0, 0, s, s)
+    // Transparent pixels would read as zero light anyway; flatten onto black for the additive blend.
+    ctx.globalCompositeOperation = 'destination-over'
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, s, s)
+  })
+  return pictureWash
 }
 
 let boardGhost: CanvasTexture | null = null
@@ -142,29 +209,6 @@ export function plasterTexture(): CanvasTexture {
   plaster.wrapS = RepeatWrapping
   plaster.wrapT = RepeatWrapping
   return plaster
-}
-
-let floorGlare: CanvasTexture | null = null
-
-/**
- * The window's reflection in a polished floor: brightest against the wall, stretching away and
- * fading out. Additive, so black adds nothing. Row 0 of the canvas is the wall end.
- */
-export function floorGlareTexture(): CanvasTexture {
-  floorGlare ??= canvasTexture(128, (ctx, s) => {
-    ctx.fillStyle = '#000'
-    ctx.fillRect(0, 0, s, s)
-    const fade = ctx.createLinearGradient(0, 0, 0, s)
-    fade.addColorStop(0, '#ffffff')
-    fade.addColorStop(0.3, '#8a8a8a')
-    fade.addColorStop(1, '#000000')
-    // The blur softens the sides of the smear as well as its far end.
-    ctx.filter = `blur(${s * 0.06}px)`
-    ctx.fillStyle = fade
-    const m = s * 0.1
-    ctx.fillRect(m, 0, s - m * 2, s)
-  })
-  return floorGlare
 }
 
 let ceilingTile: CanvasTexture | null = null

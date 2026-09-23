@@ -56,6 +56,9 @@ async function openClassroom(page: Page): Promise<string[]> {
 test('the classroom draws, stays inside its draw-call budget and looks unchanged', async ({
   page,
 }) => {
+  // Five viewpoints through the software renderer, with the sun's shadow map and the reflection
+  // probe drawn on the way in: slower than Playwright's default 30 s allows.
+  test.setTimeout(90_000)
   const errors = await openClassroom(page)
 
   // The room appears only once its KTX2 textures are transcoded, which the software renderer
@@ -119,7 +122,7 @@ test.describe('on a Quest 2', () => {
       return { tier: device.deviceTier, quality: device.quality }
     })
     expect(profile.tier).toBe('quest2')
-    expect(profile.quality.floorGlare).toBe(false)
+    expect(profile.quality.screenGlass).toBe(false)
     expect(profile.quality.boardGhost).toBe(false)
     expect(profile.quality.framebufferScale).toBe(1)
 

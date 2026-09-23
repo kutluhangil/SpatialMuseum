@@ -6,7 +6,7 @@ import { palette } from '../design/tokens'
 import { EXHIBIT_VIEW_DISTANCE, fontUrls, textSizes } from '../design/typography'
 import { useVideoElement } from '../media/useVideoElement'
 import { videoManager } from '../media/VideoManager'
-import { clockText, pauseGlyph, playGlyph } from './videoGlyphs'
+import { clockText, pauseGlyph, playBadge, playGlyph } from './videoGlyphs'
 
 type Props = {
   src: string
@@ -16,10 +16,9 @@ type Props = {
   loop?: boolean
 }
 
-// A wall screen, not a poster: a dark bezel around the picture and a play mark over it until it
-// runs, so it reads as something to press.
-const BEZEL = 0.035
-const PLAY_MARK = 0.13
+// Hung like a painting: the room draws its mat, gilt frame and picture light (ExhibitFrames). The
+// badge over the still until it runs is what says it is a film, and something to press.
+const PLAY_BADGE = 0.12
 
 // The control strip along the foot of the picture, as on any player: state on the left, elapsed
 // and total time on the right, and the elapsed share of the film drawn under both.
@@ -32,7 +31,14 @@ export function VideoScreen({ src, poster, width, aspect, loop = false }: Props)
   const [started, setStarted] = useState(false)
   const [playing, setPlaying] = useState(false)
   const height = width / aspect
-  const glyphs = useMemo(() => ({ play: playGlyph(BAR.glyph), pause: pauseGlyph(BAR.glyph) }), [])
+  const glyphs = useMemo(
+    () => ({
+      play: playGlyph(BAR.glyph),
+      pause: pauseGlyph(BAR.glyph),
+      badge: playBadge(PLAY_BADGE),
+    }),
+    [],
+  )
   useEffect(() => () => Object.values(glyphs).forEach((g) => g.dispose()), [glyphs])
 
   // The manager pauses one film to start another, so the strip follows the element, never the click.
@@ -80,20 +86,14 @@ export function VideoScreen({ src, poster, width, aspect, loop = false }: Props)
 
   return (
     <group onClick={toggle}>
-      <mesh position-z={-0.004}>
-        <planeGeometry args={[width + BEZEL * 2, height + BEZEL * 2]} />
-        <meshBasicMaterial color={palette.murekkep} />
-      </mesh>
       <mesh>
         <planeGeometry args={[width, height]} />
         {/* Unlit and untone-mapped: the video should look exactly as encoded, not re-lit by the room. */}
         <meshBasicMaterial map={started ? texture : posterTexture} toneMapped={false} />
       </mesh>
       {!started && (
-        // A dark triangle over the still: in a headset this is what says "press me".
-        <mesh position-z={0.004} rotation-z={-Math.PI / 2}>
-          <circleGeometry args={[PLAY_MARK, 3]} />
-          <meshBasicMaterial color={palette.murekkep} transparent opacity={0.8} />
+        <mesh geometry={glyphs.badge} position-z={0.004}>
+          <meshBasicMaterial color={palette.murekkep} transparent opacity={0.72} />
         </mesh>
       )}
       {started && (

@@ -3,6 +3,7 @@ import { BackSide, Color, Float32BufferAttribute, SphereGeometry } from 'three'
 import type { Museum } from '../schema/museum'
 import { EYE_HEIGHT } from '../locomotion/playerStore'
 import { useKTX2 } from '../media/useKTX2'
+import { PROBE_GAIN } from './RoomProbeCapture'
 
 const PANORAMA_URL = '/textures/panorama-campus-4k.ktx2'
 // Far enough that parallax between the eyes is nil (it reads as infinitely distant), well inside the camera far plane.
@@ -11,6 +12,8 @@ const RADIUS = 90
 // and the horizon washes into haze. Both are baked into the sphere's vertex colours.
 const EXPOSURE = 1.3
 const HAZE = { colour: '#E8EEF2', strength: 0.5, band: 0.3 }
+// Daylight against the room, for reflections: the windows are the brightest thing in the glass.
+const DAYLIGHT_GAIN = 2.5
 
 /**
  * The campus outside the windows (Poly Haven charolettenbrunn_park, CC0): an inside-out sphere centred at
@@ -48,7 +51,7 @@ export function Panorama({ museum }: { museum: Museum }) {
   useEffect(() => () => geometry.dispose(), [geometry])
 
   return (
-    <mesh position={centre} geometry={geometry}>
+    <mesh position={centre} geometry={geometry} userData={{ [PROBE_GAIN]: DAYLIGHT_GAIN }}>
       <meshBasicMaterial
         map={texture}
         vertexColors

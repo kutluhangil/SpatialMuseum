@@ -43,7 +43,7 @@ describe('quality profiles', () => {
     expect(two.foveation).toBeGreaterThan(three.foveation)
     expect(two.targetFrameRate).toBeLessThan(three.targetFrameRate)
     expect(two.anisotropy).toBeLessThan(three.anisotropy)
-    expect(two.floorGlare).toBe(false)
+    expect(two.screenGlass).toBe(false)
     expect(two.boardGhost).toBe(false)
   })
 

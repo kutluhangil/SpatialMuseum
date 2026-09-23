@@ -6,7 +6,8 @@ import { classroomLayout } from '../src/classroom/layout'
 import { ceilingGrid } from '../src/scene/ceilingGrid'
 import { wallFrame } from '../src/scene/wallFrame'
 
-import { JAMB_WIDTH, buildSunPatches } from '../src/scene/WallBuilder'
+import { JAMB_WIDTH } from '../src/scene/WallBuilder'
+import { buildSunFloor } from '../src/scene/sun'
 import { buildClassroomFurniture, buildContactShadows } from '../src/classroom/furniture'
 import {
   museumSegments,
@@ -191,8 +192,8 @@ describe('classroomLayout', () => {
 
   it('shortens the sunlight patches by however far each blind is left down', () => {
     const covered = layout.blinds.map((b, i) => (b.top - b.bottom) / (room.windows[i]?.height ?? 1))
-    const bare = buildSunPatches(room)
-    const shaded = buildSunPatches(room, covered)
+    const bare = buildSunFloor(room)
+    const shaded = buildSunFloor(room, covered)
     bare?.computeBoundingBox()
     shaded?.computeBoundingBox()
     // The windows are on the west wall, so a patch reaches into the room along +x.

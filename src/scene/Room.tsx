@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { AdditiveBlending, Color, RepeatWrapping, type Texture } from 'three'
+import { Color, RepeatWrapping, type Texture } from 'three'
 import { useThree } from '@react-three/fiber'
 import { TeleportTarget } from '@react-three/xr'
 import type { ExhibitDef, RoomDef } from '../schema/museum'
@@ -7,37 +7,47 @@ import { palette } from '../design/tokens'
 import {
   PLASTER_METRES,
   ceilingTileTexture,
-  floorGlareTexture,
   glassTexture,
   plasterTexture,
   softShadowTexture,
-  sunPatchTexture,
 } from '../design/proceduralTextures'
 import { CLASSROOM_LIGHT } from '../design/light'
 import { useKTX2 } from '../media/useKTX2'
 import { usePlayerStore } from '../locomotion/playerStore'
 import { resolveCircle } from '../locomotion/collision'
-import {
-  buildFrameShadows,
-  buildRoomTrim,
-  buildRoomWalls,
-  buildSunPatches,
-  buildWindowGlare,
-  buildWindowGlass,
-} from './WallBuilder'
+import { buildFrameShadows, buildRoomTrim, buildRoomWalls, buildWindowGlass } from './WallBuilder'
 import { FLOOR_TILE_METRES, buildCeiling, buildCeilingPanels, buildFloor } from './Surfaces'
-import { floorSheen } from './floorSheen'
-import { roomBlinds } from '../classroom/layout'
+import { probeCacheKey, probeReflection, roomProbe, type Reflective } from './roomProbe'
+import { PROBE_GAIN, RoomProbeCapture } from './RoomProbeCapture'
 import { useRoomStore } from '../classroom/roomStore'
 import { quality } from '../xr/device'
+import { ExhibitFrames } from '../exhibits/ExhibitFrames'
+import { Sunlight } from './Sunlight'
 
 const FLOOR_URL = '/textures/floor-interior-tiles-2k.ktx2'
 
 // An unlit LED panel: dark grey acrylic, not black, because daylight still falls on it.
 const PANELS_OFF = '#727a80'
 
-// Glazed ceramic: strength of the grazing-angle reflection added to the floor colour.
-const FLOOR_SHEEN = 0.16
+// A lit LED panel against the white it is drawn with: what makes it a highlight in reflections.
+const PANEL_GAIN = 5
+// Glazed ceramic tiles, mopped but not polished: a blurred reflection of the windows and ceiling
+// panels that strengthens towards grazing angles, where a tiled corridor always looks wet.
+const FLOOR_REFLECTION: Reflective = {
+  f0: 0.06,
+  strength: 1.5,
+  lod: 1.5,
+  normal: 'floor',
+  mode: 'opaque',
+}
+// Float glass: faint straight on, a clear mirror of the room at a slant.
+const WINDOW_REFLECTION: Reflective = {
+  f0: 0.04,
+  strength: 1,
+  lod: 0.6,
+  normal: 'mesh',
+  mode: 'glass',
+}
 
 // PLAN §14 Faz 3: no teleport target closer than 0.4 m to a wall; targets are nudged out instead of refused.
 const TELEPORT_WALL_CLEARANCE = 0.4
@@ -70,27 +80,19 @@ export function Room({ room, exhibits }: RoomProps) {
   const floor = useMemo(() => buildFloor(room, light, FLOOR_TILE_METRES), [room, light])
   const ceiling = useMemo(() => buildCeiling(room, light), [room, light])
   const panels = useMemo(() => buildCeilingPanels(room, palette.onsut, light), [room, light])
-  const sheen = useMemo(() => floorSheen(light.light, FLOOR_SHEEN), [light])
-  const blindsDown = useRoomStore((s) => s.blindsDown)
+  const probe = roomProbe(room)
+  const floorReflection = useMemo(() => probeReflection(probe, FLOOR_REFLECTION), [probe])
+  const windowReflection = useMemo(() => probeReflection(probe, WINDOW_REFLECTION), [probe])
   const lightsOn = useRoomStore((s) => s.lightsOn)
-  const sun = useMemo(() => {
-    const blinds = room.classroom && blindsDown ? roomBlinds(room) : []
-    const covered = room.windows.map((w, i) => {
-      const b = blinds[i]
-      return b ? (b.top - b.bottom) / w.height : 0
-    })
-    return buildSunPatches(room, covered)
-  }, [room, blindsDown])
   const glass = useMemo(() => buildWindowGlass(room), [room])
-  const glare = useMemo(() => (quality.floorGlare ? buildWindowGlare(room) : null), [room])
   const shadows = useMemo(() => buildFrameShadows(room, exhibits), [room, exhibits])
   useEffect(
     () => () => {
-      for (const g of [walls, trim, floor, ceiling, panels, sun, glass, glare, shadows]) {
+      for (const g of [walls, trim, floor, ceiling, panels, glass, shadows]) {
         g?.dispose()
       }
     },
-    [walls, trim, floor, ceiling, panels, sun, glass, glare, shadows],
+    [walls, trim, floor, ceiling, panels, glass, shadows],
   )
 
   // Anisotropy is capped per device: a Quest 2 spends that bandwidth better elsewhere.
@@ -138,8 +140,8 @@ export function Room({ room, exhibits }: RoomProps) {
           <meshBasicMaterial
             map={floorMap}
             vertexColors
-            onBeforeCompile={sheen}
-            customProgramCacheKey={() => 'floor-sheen'}
+            onBeforeCompile={floorReflection}
+            customProgramCacheKey={() => probeCacheKey(FLOOR_REFLECTION)}
           />
         </mesh>
       </TeleportTarget>
@@ -147,7 +149,7 @@ export function Room({ room, exhibits }: RoomProps) {
         <meshBasicMaterial map={ceilingMap} vertexColors />
       </mesh>
       {/* Switched off, the panels stop being light sources and read as grey acrylic. */}
-      <mesh geometry={panels}>
+      <mesh geometry={panels} userData={lightsOn ? { [PROBE_GAIN]: PANEL_GAIN } : {}}>
         <meshBasicMaterial vertexColors color={lightsOn ? '#ffffff' : PANELS_OFF} />
       </mesh>
       {shadows && (
@@ -161,6 +163,8 @@ export function Room({ room, exhibits }: RoomProps) {
           />
         </mesh>
       )}
+      <RoomProbeCapture probe={probe} />
+      <ExhibitFrames room={room} exhibits={exhibits} light={light} probe={probe} />
       {glass && (
         // After the panorama and walls; never writes depth, so exhibits behind stay visible.
         <mesh geometry={glass} renderOrder={3}>
@@ -170,34 +174,12 @@ export function Room({ room, exhibits }: RoomProps) {
             transparent
             depthWrite={false}
             toneMapped={false}
+            onBeforeCompile={windowReflection}
+            customProgramCacheKey={() => probeCacheKey(WINDOW_REFLECTION)}
           />
         </mesh>
       )}
-      {glare && (
-        // The floor's reflection of the window: under the sun patches, over the contact shadows.
-        <mesh geometry={glare} renderOrder={2}>
-          <meshBasicMaterial
-            map={floorGlareTexture()}
-            color={light.light}
-            transparent
-            opacity={0.22}
-            blending={AdditiveBlending}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
-      {sun && (
-        <mesh geometry={sun} renderOrder={2}>
-          <meshBasicMaterial
-            map={sunPatchTexture()}
-            color={light.light}
-            transparent
-            opacity={light.sun}
-            blending={AdditiveBlending}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
+      <Sunlight room={room} light={light} />
     </group>
   )
 }
