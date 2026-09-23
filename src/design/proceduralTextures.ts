@@ -96,8 +96,15 @@ export function boardGhostTexture(): CanvasTexture {
 let plaster: CanvasTexture | null = null
 
 /**
- * One square metre of painted plaster: near-white, so multiplying a wall's baked colour by it only
- * breaks up the flatness. Fine speckle for the render, plus faint roller streaks left by the brush.
+ * How much wall one repeat of the plaster covers. Wide enough that its patches read as unevenness
+ * rather than as a pattern repeating every metre.
+ */
+export const PLASTER_METRES = 2.5
+
+/**
+ * Painted plaster, one repeat covering PLASTER_METRES of wall: near-white, so multiplying a wall's
+ * baked colour by it only breaks up the flatness. Fine speckle for the render, roller streaks and
+ * the uneven patches a roller leaves behind.
  */
 export function plasterTexture(): CanvasTexture {
   plaster ??= canvasTexture(256, (ctx, s) => {
@@ -107,15 +114,29 @@ export function plasterTexture(): CanvasTexture {
     ctx.filter = `blur(${s * 0.09}px)`
     for (let i = 0; i < 7; i++) {
       const x = (i / 7) * s + Math.sin(i * 7.31) * s * 0.03
-      ctx.fillStyle = i % 2 === 0 ? 'rgba(0,0,0,0.012)' : 'rgba(255,255,255,0.03)'
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
       ctx.fillRect(x, 0, s * 0.07, s)
     }
+    // Patches where the roller left more paint than the pass beside it: a painted wall is never
+    // one tone, and a perfectly even one is the clearest sign of a rendered room.
+    for (let i = 0; i < 26; i++) {
+      const x = ((i * 97) % 256) * (s / 256)
+      const y = ((i * 151) % 256) * (s / 256)
+      ctx.fillStyle = i % 3 === 0 ? 'rgba(0,0,0,0.035)' : 'rgba(255,255,255,0.045)'
+      ctx.beginPath()
+      ctx.ellipse(x, y, s * 0.14, s * 0.09, i * 1.1, 0, Math.PI * 2)
+      ctx.fill()
+    }
     ctx.filter = `blur(${s * 0.008}px)`
+    // Deterministic speckle: the same wall every load, so a screenshot can be compared.
+    let seed = 13
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647
+      return seed / 2147483647
+    }
     for (let i = 0; i < 1400; i++) {
-      const x = Math.random() * s
-      const y = Math.random() * s
-      ctx.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.035)'
-      ctx.fillRect(x, y, 1.5, 1.5)
+      ctx.fillStyle = rand() < 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.06)'
+      ctx.fillRect(rand() * s, rand() * s, 1.5, 1.5)
     }
   })
   plaster.wrapS = RepeatWrapping

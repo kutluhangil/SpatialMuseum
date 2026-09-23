@@ -1,9 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
 
 // Fixed viewpoints, so a screenshot always frames the same thing: the seat a student starts in,
-// the window wall with its blinds and sunlight, and the board with the lesson on it.
+// the window wall with its blinds and sunlight, the board with the lesson on it, and the
+// demonstration set the class is actually taught from.
 const VIEWS = [
   { name: 'seat', x: 0.9, z: -1.85, yaw: 0.19, pitch: 0 },
+  { name: 'demo', x: -2.0, z: -2.3, yaw: 0, pitch: 0 },
   { name: 'windows', x: 1.5, z: 1.0, yaw: Math.PI / 2 - 0.15, pitch: 90 },
   { name: 'posters', x: 0, z: 2.0, yaw: Math.PI, pitch: 0 },
   { name: 'videos', x: 3.0, z: 0, yaw: -Math.PI / 2 + 0.1, pitch: 0 },

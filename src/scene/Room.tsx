@@ -5,6 +5,7 @@ import { TeleportTarget } from '@react-three/xr'
 import type { ExhibitDef, RoomDef } from '../schema/museum'
 import { palette } from '../design/tokens'
 import {
+  PLASTER_METRES,
   ceilingTileTexture,
   floorGlareTexture,
   glassTexture,
@@ -100,6 +101,8 @@ export function Room({ room, exhibits }: RoomProps) {
   const teleport = usePlayerStore((s) => s.teleport)
   const wallMap = useMemo(() => {
     const t = plasterTexture()
+    // Wall UVs are in metres, so this is what spreads one repeat over PLASTER_METRES of wall.
+    t.repeat.set(1 / PLASTER_METRES, 1 / PLASTER_METRES)
     // The walls are read at a glance from across the room; anisotropy keeps the grain from smearing.
     t.anisotropy = maxAnisotropy
     return t

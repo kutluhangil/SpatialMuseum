@@ -121,13 +121,14 @@ describe('classroomLayout', () => {
     expect(own?.yaw).toBe(layout.frontYaw)
   })
 
-  it('grounds every desk, chair and radiator with one contact-shadow quad each, on the floor', () => {
+  it('grounds every desk, chair and radiator with a penumbra and a core, on the floor', () => {
     const g = buildContactShadows(room, layout)
-    // Desks, chairs, the lecturer's desk and chair, the waste bin and the radiators.
-    const quads = layout.desks.length + layout.chairs.length + 3 + layout.radiators.length
-    expect(g.getAttribute('position').count).toBe(quads * 4)
+    // Desks, chairs, the lecturer's desk and chair, the waste bin, the three pieces of the
+    // demonstration set and the radiators.
+    const items = layout.desks.length + layout.chairs.length + 6 + layout.radiators.length
+    expect(g.getAttribute('position').count).toBe(items * 2 * 4)
     g.computeBoundingBox()
-    expect(g.boundingBox?.max.y).toBeCloseTo(0.002)
+    expect(g.boundingBox?.max.y).toBeCloseTo(0.0025)
   })
 
   it('lowers a roller blind part-way in every window, always above the window handle', () => {

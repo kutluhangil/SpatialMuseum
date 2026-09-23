@@ -9,6 +9,16 @@ export type WallArea = { u0: number; u1: number; v0: number; v1: number }
 export type WallSpot = { wall: WallSideName; u: number; v: number }
 export type Blind = { wall: WallSideName; u: number; width: number; top: number; bottom: number }
 export type CeilingSpot = { x: number; z: number }
+/**
+ * The demonstration corner every breastfeeding class is taught from: a low nursing chair with its
+ * C-pillow and teaching doll, the table of expressing equipment beside it, a bassinet off to the
+ * side and the mat they all stand on.
+ */
+export type DemoCorner = {
+  chair: Placed
+  table: Placed
+  bassinet: Placed
+}
 export type ClassroomLayout = {
   frontYaw: number
   desks: Placed[]
@@ -28,6 +38,7 @@ export type ClassroomLayout = {
   switches: WallSpot[]
   callPoints: WallSpot[]
   ceiling: { diffusers: CeilingSpot[]; smokeDetectors: CeilingSpot[]; speakers: CeilingSpot[] }
+  demo: DemoCorner
   footprints: Footprint[]
   spawnSeat: Placed
 }
@@ -46,6 +57,15 @@ const BIN = { u: 0.35, d: 0.45, radius: 0.17 }
 const COAT_RAIL = { width: 0.6, v: 1.7, gap: 0.35 }
 // Notices pinned straight to the wall above the rail: the pin board itself carries the lesson panels.
 const NOTICE = { v: 2.25, spread: 0.15 }
+
+// The demonstration set, measured along the front wall. It stands in front of the teaching wall
+// where the class can see it, split either side of the centre aisle, which stays open from the
+// board to the back. Every piece is low enough not to cut into the board or the screen from a seat.
+const DEMO = {
+  chair: { u: 5, d: 1.3, size: 0.62, depth: 0.58 },
+  table: { u: 5.9, d: 1.35, width: 0.7, depth: 0.45 },
+  bassinet: { u: 8.6, d: 1.35, width: 0.86, depth: 0.5 },
+}
 
 // Chairs left by the last class: small turns and shifts. Between rows only ~3 cm of slack keeps a
 // chair clear of the desk behind it; the back row has room to be pushed out further.
@@ -274,6 +294,17 @@ export function classroomLayout(room: RoomDef): ClassroomLayout {
 
   const bin = { position: at(BIN.u, BIN.d), yaw: frontYaw }
 
+  // Everything in the demonstration set faces the class, as the lecturer's chair does.
+  const facingClass = frontYaw + Math.PI
+  const demo: DemoCorner = {
+    chair: { position: at(DEMO.chair.u, DEMO.chair.d), yaw: facingClass },
+    table: { position: at(DEMO.table.u, DEMO.table.d), yaw: facingClass },
+    bassinet: { position: at(DEMO.bassinet.u, DEMO.bassinet.d), yaw: facingClass },
+  }
+  footprints.push(footprint(demo.chair.position, f, DEMO.chair.size, DEMO.chair.depth))
+  footprints.push(footprint(demo.table.position, f, DEMO.table.width, DEMO.table.depth))
+  footprints.push(footprint(demo.bassinet.position, f, DEMO.bassinet.width, DEMO.bassinet.depth))
+
   // Right next to the door, so it never runs into whatever hangs along the rest of the wall.
   const backFrame = wallFrame(room, back)
   const doorEnd = Math.max(
@@ -324,6 +355,7 @@ export function classroomLayout(room: RoomDef): ClassroomLayout {
     switches,
     callPoints,
     ceiling: ceilingFixtures(room, f, projector),
+    demo,
     footprints,
     spawnSeat,
   }

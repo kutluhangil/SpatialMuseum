@@ -10,7 +10,8 @@ import {
   type WallSideName,
 } from '../schema/museum'
 import type { RoomLight } from '../design/light'
-import { daylight } from './bakedLight'
+import { daylightColor } from './bakedLight'
+import { ceilingGrid } from './ceilingGrid'
 import { FRAME_PROFILE, FRAME_SHADOW } from '../exhibits/frameSpec'
 import {
   wallFrame,
@@ -65,16 +66,30 @@ export function litColor(hex: string, light: RoomLight, brightness = 1): Color {
  */
 export function wallShade(u: number, v: number, length: number, height: number): number {
   const corner = Math.min(u, length - u)
-  const cornerAO = 1 - 0.2 * (1 - smooth(corner / 0.8))
-  const floorAO = 1 - 0.16 * (1 - smooth(v / 0.6))
-  const ceilingAO = 1 - 0.1 * (1 - smooth((height - v) / 0.7))
+  const cornerAO = 1 - 0.3 * (1 - smooth(corner / 1.1))
+  const floorAO = 1 - 0.24 * (1 - smooth(v / 0.75))
+  const ceilingAO = 1 - 0.15 * (1 - smooth((height - v) / 0.8))
   return cornerAO * floorAO * ceilingAO
 }
 
+// The wash an LED panel throws on the wall beside it. The scallops this leaves along the top of a
+// long wall are what tells the eye the ceiling is a row of fittings, not one glowing plane; without
+// them a fourteen-metre wall is an even gradient and reads as a backdrop.
+const WASH = { gain: 0.13, drop: 1.6, spread: 1.7 }
+
+type Panel = { x: number; z: number }
+
+function panelWash(panels: readonly Panel[], x: number, z: number, above: number): number {
+  if (panels.length === 0) return 0
+  const near = Math.min(...panels.map((p) => Math.hypot(x - p.x, z - p.z)))
+  return WASH.gain * (1 - smooth(above / WASH.drop)) * (1 - smooth(near / WASH.spread))
+}
+
 function shadeColor(base: Color, u: number, v: number, length: number, height: number): Color {
+  // Light arrives from above, so a wall loses it steadily on the way down to the skirting.
   return base
     .clone()
-    .lerp(WHITE, (v / height) * 0.07)
+    .multiplyScalar(0.88 + 0.12 * smooth(v / height))
     .multiplyScalar(wallShade(u, v, length, height))
 }
 
@@ -143,10 +158,17 @@ function subdividedWall(
   base: Color,
   dado: Color,
   height: number,
+  panels: readonly Panel[],
 ): BufferGeometry[] {
   const L = frame.length
-  const us = cuts(r.u0, r.u1, [0.2, 0.45, 0.8, L - 0.8, L - 0.45, L - 0.2], 1)
-  const vs = cuts(r.v0, r.v1, [0.2, 0.6, CHAIR_RAIL.top, height - 0.7, height - 0.3], 1.2)
+  // Half-metre steps along the wall: coarser than that and the panel wash turns into flat bands.
+  const us = cuts(r.u0, r.u1, [0.2, 0.45, 0.8, 1.2, L - 1.2, L - 0.8, L - 0.45, L - 0.2], 0.5)
+  const vs = cuts(
+    r.v0,
+    r.v1,
+    [0.2, 0.45, 0.75, CHAIR_RAIL.top, height - 1.6, height - 0.8, height - 0.35],
+    1.2,
+  )
   const parts: BufferGeometry[] = []
   for (let i = 0; i < us.length - 1; i++) {
     for (let j = 0; j < vs.length - 1; j++) {
@@ -158,7 +180,10 @@ function subdividedWall(
       const tone = v1 <= CHAIR_RAIL.top + 1e-6 ? dado : base
       const c = (u: number, v: number) => {
         const [wx, , wz] = wallPoint(frame, u, v)
-        return shadeColor(tone, u, v, L, height).multiplyScalar(daylight(room, wx, wz, side))
+        const wash = 1 + panelWash(panels, wx, wz, height - v)
+        return shadeColor(tone, u, v, L, height)
+          .multiply(daylightColor(room, wx, wz, side))
+          .multiplyScalar(wash)
       }
       // UVs run in metres along the wall and up it, so the plaster never stretches or tiles twice.
       parts.push(
@@ -185,12 +210,13 @@ export function buildRoomWalls(
   light: RoomLight,
 ): BufferGeometry {
   const parts: BufferGeometry[] = []
+  const { panels } = ceilingGrid(room.rect)
   for (const side of SIDES) {
     const base = litColor(baseColor, light, SIDE_BRIGHTNESS[side])
     const dado = litColor(dadoColor, light, SIDE_BRIGHTNESS[side])
     const frame = wallFrame(room, side)
     for (const r of wallSegments(frame.length, room.height, roomOpenings(room, side))) {
-      parts.push(...subdividedWall(room, side, frame, r, base, dado, room.height))
+      parts.push(...subdividedWall(room, side, frame, r, base, dado, room.height, panels))
     }
   }
   return merge(parts, `walls of room "${room.id}"`)

@@ -57,7 +57,7 @@ export function Classroom({ room, museum }: { room: RoomDef; museum: Museum }) {
           color="#000000"
           alphaMap={softShadowTexture()}
           transparent
-          opacity={0.55}
+          opacity={0.42}
           depthWrite={false}
         />
       </mesh>

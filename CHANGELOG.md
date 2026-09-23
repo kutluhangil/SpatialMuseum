@@ -3,6 +3,13 @@
 Newest entries at the top.
 
 ## 2026-09-23
+- The room is a breastfeeding class, not a generic lecture hall: a low nursing chair with its C-pillow and swaddled teaching doll stands in front of the board, beside the table the expressing section is taught from (pump, funnel, bottles, folded muslins) and a demonstration bassinet on its stand. All of it merges into the one classroom mesh, so it costs no draw call.
+- Wall screens play like players now: once started they carry a control strip with a play/pause mark, the elapsed and total time, and a progress line along the foot of the picture.
+- Baked light pass on the hall: daylight now falls off across the whole room instead of sitting within a few per cent of white, and carries a warm/cool split (cool by the glass, warm where only the fittings and the floor bounce reach).
+- Ceiling panels throw a wash on the wall beside them, so a fourteen-metre wall reads as scalloped by fittings rather than as an even gradient.
+- Furniture is occluded towards the floor, and every desk and chair is tinted a few per cent off its neighbours, so a row of thirty stops reading as one model copied.
+- Contact shadows gained a core under the legs on top of their penumbra; corner, floor-seam and ceiling-seam occlusion on walls and floor deepened.
+- Wall plaster covers 2.5 m per repeat with roller patches and deterministic speckle, which breaks up the flatness without tiling visibly.
 - The class's own work is in the room: 24 poster pages hung in two rows along the back wall and six video stations on the side wall, imported from `content/media/raw` by `npm run media:classroom` (KTX2 atlases for the pages, H.264 for the videos).
 - The posters are drawn as two atlases, so the whole exhibition costs one draw call per sheet instead of one per page; `posterWall` in `content/museum.json` decides where the run hangs and the schema checks it clears the door and fits the wall.
 - Pages drawn in white ink on a transparent background are flattened onto a dark board rather than white paper, which is what makes half of them readable at all.

@@ -26,6 +26,13 @@ export const palette = {
   stor: '#DCD6C8', // roller blind fabric
   alarm: '#C7362E', // fire alarm call point, red marker cap
   kalemMavi: '#2F5E9E', // blue marker cap
+  // The demonstration corner: what makes the room a breastfeeding class rather than any classroom.
+  dosemelik: '#9FB3A8', // nursing chair upholstery
+  yastik: '#EFE6D6', // C-shaped nursing pillow
+  bebekTeni: '#E5C6AA', // teaching doll, vinyl
+  kundak: '#DCE6EC', // swaddle and blankets
+  sut: '#FAF7F0', // expressed milk in the demo bottles
+  hasir: '#C6B293', // bassinet basket
 } as const
 
 export type WallTone = 'kirikBeyaz'

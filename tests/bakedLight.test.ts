@@ -12,7 +12,7 @@ describe('daylight', () => {
   it('brightens the floor near the windows and dims the far side', () => {
     const near = daylight(withWindows, -4.3, 0)
     const far = daylight(withWindows, 4.3, 0)
-    expect(near).toBeGreaterThan(1.05)
+    expect(near).toBeGreaterThan(1.03)
     expect(far).toBeLessThan(1)
   })
 

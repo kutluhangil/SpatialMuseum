@@ -6,6 +6,8 @@ import {
   Float32BufferAttribute,
   Matrix4,
   Quaternion,
+  SphereGeometry,
+  TorusGeometry,
   Vector3,
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
@@ -14,7 +16,7 @@ import { palette } from '../design/tokens'
 import { CLASSROOM_LIGHT } from '../design/light'
 import { litColor } from '../scene/WallBuilder'
 import { wallFrame, wallPoint, wallYaw } from '../scene/wallFrame'
-import { daylight } from '../scene/bakedLight'
+import { daylightColor } from '../scene/bakedLight'
 import { hashSeed, seededRandom, type ClassroomLayout, type Placed, type WallSpot } from './layout'
 
 // Faked key light from above: tops brightest, faces turned away darkest. Same idea as the
@@ -69,6 +71,25 @@ function shadedCylinder(
   }
   g.setAttribute('color', new Float32BufferAttribute(colors, 3))
   return g
+}
+
+/**
+ * Colours a curved surface from its normals: upward faces catch the ceiling panels, downward ones
+ * only the floor bounce. Flat-shaded boxes get their tone per face instead, from FACE_SHADE.
+ */
+function shadedByNormal(g: BufferGeometry, color: Color, down = 0.6, up = 1.06): BufferGeometry {
+  const rounded = g.toNonIndexed()
+  g.dispose()
+  rounded.deleteAttribute('uv')
+  const normals = rounded.getAttribute('normal')
+  const colors: number[] = []
+  const c = new Color()
+  for (let i = 0; i < normals.count; i++) {
+    c.copy(color).multiplyScalar(down + (up - down) * (normals.getY(i) * 0.5 + 0.5))
+    colors.push(c.r, c.g, c.b)
+  }
+  rounded.setAttribute('color', new Float32BufferAttribute(colors, 3))
+  return rounded
 }
 
 /** Local part placed at (x, y, z) inside a piece whose local -Z faces the front of the room. */
@@ -176,6 +197,159 @@ function lecturerDesk(): BufferGeometry[] {
     part(shadedBox(w - 0.06, h - 0.1, 0.02, body), 0, (h - 0.03) / 2 + 0.03, d / 2 - 0.02),
     part(shadedBox(0.42, 0.62, d - 0.06, body), w / 2 - 0.25, 0.34, 0),
   ]
+}
+
+// The demonstration set, and the reason the room reads as a breastfeeding class rather than any
+// lecture hall. A nursing chair is lower and deeper than a lecture chair and has arms to rest on;
+// the C-pillow, the teaching doll and the expressing equipment are what the sections are taught
+// with. Every piece is kept under 0.8 m so it never cuts into the board from a seat.
+const NURSING = { seatTop: 0.45, width: 0.62, depth: 0.58, back: 0.3, arm: 0.11, foot: 0.06 }
+const PILLOW = { radius: 0.26, tube: 0.085, arc: 4.2 }
+const DOLL = { head: 0.055, body: 0.072, length: 0.24 }
+const DEMO_TABLE = { width: 0.7, depth: 0.45, height: 0.6, leg: 0.03 }
+const BASSINET = { width: 0.86, depth: 0.5, basket: 0.28, stand: 0.52 }
+
+/** Low upholstered nursing chair: a padded plinth and cushion, short arms and a shallow back. */
+function nursingChair(): BufferGeometry[] {
+  const { seatTop, width, depth, back, arm, foot } = NURSING
+  const fabric = lit(palette.dosemelik)
+  // The plinth takes the wear, so it reads a shade deeper than the cushion above it.
+  const plinth = fabric.clone().multiplyScalar(0.9)
+  const wood = lit(palette.mese)
+  const cushion = 0.1
+  const plinthHeight = seatTop - cushion - foot
+  const out = [
+    part(shadedBox(width, plinthHeight, depth, plinth), 0, foot + plinthHeight / 2, 0),
+    part(shadedBox(width - 0.04, cushion, depth - 0.08, fabric), 0, seatTop - cushion / 2, 0),
+    // The back sits away from the class, which local +Z faces.
+    part(shadedBox(width, back, 0.1, fabric), 0, seatTop + back / 2, depth / 2 - 0.05),
+  ]
+  for (const x of [-(width - arm) / 2, (width - arm) / 2]) {
+    out.push(part(shadedBox(arm, 0.16, depth - 0.1, fabric), x, seatTop + 0.08, 0))
+    for (const z of [-depth / 2 + 0.06, depth / 2 - 0.06]) {
+      out.push(part(shadedCylinder(0.022, foot, wood, 8), x, foot / 2, z))
+    }
+  }
+  return out
+}
+
+/**
+ * The C-shaped nursing pillow on the chair's seat. Its missing arc has to face the class, so the
+ * gap is turned to local -Z: a ring seen from the front would read as a swim float, not a pillow.
+ */
+function nursingPillow(): BufferGeometry[] {
+  const { radius, tube, arc } = PILLOW
+  const g = shadedByNormal(
+    new TorusGeometry(radius, tube, 8, 22, arc),
+    lit(palette.yastik),
+    0.68,
+    1.08,
+  )
+  // Laid flat, the ring's parameter angle and the direction it points stay the same, so turning by
+  // the offset between the gap's middle and -Z aims the opening at the class.
+  g.rotateX(-Math.PI / 2).rotateY(Math.PI / 2 - (arc + Math.PI * 2) / 2)
+  return [part(g, 0, NURSING.seatTop + tube * 0.8, 0)]
+}
+
+/** The swaddled teaching doll, lying in the pillow's hollow with its head towards the left arm. */
+function teachingDoll(): BufferGeometry[] {
+  const { head, body, length } = DOLL
+  const y = NURSING.seatTop + PILLOW.tube * 0.9 + body * 0.6
+  // A shade below the pillow it lies on, or the doll disappears into it from the back rows.
+  const swaddle = shadedByNormal(
+    new CylinderGeometry(body * 0.7, body, length, 12),
+    lit(palette.kundak).multiplyScalar(0.82),
+    0.62,
+    1.06,
+  ).rotateZ(Math.PI / 2)
+  const skull = shadedByNormal(new SphereGeometry(head, 12, 8), lit(palette.bebekTeni), 0.6, 1.06)
+  // Held across the body rather than square to the chair, which is how a baby is actually fed,
+  // and what stops the swaddle reading as a bolster cushion laid on the pillow.
+  const across = -0.5
+  const headX = -(length / 2 + head * 0.55)
+  return [
+    turned(part(swaddle, 0, y, 0), 0.02, 0, -0.03, across),
+    turned(
+      part(skull, headX * Math.cos(across), y + head * 0.35, -headX * Math.sin(across)),
+      0.02,
+      0,
+      -0.03,
+      0,
+    ),
+  ]
+}
+
+/** The table the expressing section is taught from: a pump, its funnel, bottles and storage bags. */
+function expressingTable(): BufferGeometry[] {
+  const { width, depth, height, leg } = DEMO_TABLE
+  const top = lit(palette.laminat)
+  const steel = lit(palette.aluminyum)
+  const white = lit(palette.beyazTahta)
+  const milk = lit(palette.sut)
+  const out = [
+    part(shadedBox(width, 0.03, depth, top), 0, height - 0.015, 0),
+    part(shadedBox(width - 0.1, 0.018, depth - 0.08, steel), 0, 0.22, 0),
+  ]
+  for (const x of [-width / 2 + 0.04, width / 2 - 0.04]) {
+    for (const z of [-depth / 2 + 0.04, depth / 2 - 0.04]) {
+      out.push(part(shadedBox(leg, height - 0.03, leg, steel), x, (height - 0.03) / 2, z))
+    }
+  }
+  const deck = height + 0.001
+  // The pump: a small white body with its control face turned to the class, so it is read as a
+  // machine rather than as a white block, and the funnel standing in front of it.
+  out.push(part(shadedBox(0.13, 0.095, 0.09, white), -0.22, deck + 0.0475, 0.02))
+  out.push(part(shadedBox(0.08, 0.045, 0.004, lit(palette.murekkep)), -0.22, deck + 0.055, -0.026))
+  out.push(part(shadedCylinder(0.035, 0.075, white, 12), -0.09, deck + 0.037, -0.03))
+  for (const [x, z] of [
+    [0.04, 0.09],
+    [0.13, 0.0],
+  ] as const) {
+    out.push(part(shadedCylinder(0.032, 0.12, milk, 12), x, deck + 0.06, z))
+    out.push(part(shadedCylinder(0.026, 0.025, lit(palette.kalemMavi), 12), x, deck + 0.132, z))
+  }
+  // Muslins folded ready for the next demonstration; a stack reads from further off than the
+  // storage bags it replaces, which were thin enough to vanish at any distance.
+  out.push(part(shadedBox(0.17, 0.055, 0.13, lit(palette.kundak)), 0.25, deck + 0.0275, 0.03))
+  out.push(part(shadedBox(0.16, 0.016, 0.12, lit(palette.onsut)), 0.25, deck + 0.063, 0.03))
+  return out
+}
+
+/**
+ * Demonstration bassinet on its stand. Read from the back of a fourteen-metre hall it has to be a
+ * cot at a glance, so it is a pale body under a wicker band with its bedding showing over the rim,
+ * rather than one tan box that resolves into a crate.
+ */
+function bassinet(): BufferGeometry[] {
+  const { width, depth, basket, stand } = BASSINET
+  const body = lit(palette.perde)
+  const wicker = lit(palette.hasir)
+  const steel = lit(palette.aluminyum)
+  const bedding = lit(palette.kundak)
+  const band = basket * 0.42
+  const rim = stand + basket
+  const out = [
+    part(shadedBox(width, basket - band, depth, body), 0, stand + band + (basket - band) / 2, 0),
+    part(shadedBox(width - 0.03, band, depth - 0.03, wicker), 0, stand + band / 2, 0),
+    // The rim overhangs the body, which is what gives the cot its shoulder from across the room.
+    part(shadedBox(width + 0.04, 0.035, depth + 0.04, body), 0, rim, 0),
+    // Bedding heaped above the rim, with a sheet turned down over the near side and a pillow.
+    part(shadedBox(width - 0.14, 0.1, depth - 0.12, bedding), 0, rim + 0.05, 0),
+    part(
+      shadedBox(width - 0.1, 0.06, 0.09, lit(palette.beyazTahta)),
+      0,
+      rim + 0.03,
+      -depth / 2 + 0.07,
+    ),
+    part(shadedBox(0.2, 0.07, 0.15, lit(palette.yastik)), width / 2 - 0.2, rim + 0.08, 0),
+  ]
+  for (const x of [-width / 2 + 0.1, width / 2 - 0.1]) {
+    for (const z of [-depth / 2 + 0.07, depth / 2 - 0.07]) {
+      out.push(part(shadedBox(0.03, stand, 0.03, steel), x, stand / 2, z))
+    }
+    out.push(part(shadedBox(0.025, 0.025, depth - 0.14, steel), x, 0.14, 0))
+  }
+  return out
 }
 
 // Notebooks, pens and bottles left on some desks: what makes a room read as used, not rendered.
@@ -333,13 +507,42 @@ export type BlindFabric = { geometry: BufferGeometry; rail: number }
 const PAPER = { width: 0.21, height: 0.297, tilt: 0.05 }
 const PIN_COLOURS = [palette.alarm, palette.kalemMavi, palette.kolostrum, palette.adacayi]
 
-/** Folds the room's baked daylight into every vertex colour of the merged furniture. */
-function bakeDaylight(g: BufferGeometry, room: RoomDef): BufferGeometry {
+// How far apart two pieces of the same furniture can read. A row of thirty identical desks is
+// the clearest sign of a copied model; a few per cent of drift reads as different batches and
+// years of sunlight instead.
+const WEAR_SPREAD = 0.08
+
+/** Shifts one piece's whole colour set by a little, drawn from the room's own wear sequence. */
+function weathered(parts: BufferGeometry[], wear: () => number): BufferGeometry[] {
+  const k = 1 - WEAR_SPREAD / 2 + wear() * WEAR_SPREAD
+  for (const g of parts) {
+    const col = g.getAttribute('color')
+    for (let i = 0; i < col.count; i++) {
+      col.setXYZ(i, col.getX(i) * k, col.getY(i) * k, col.getZ(i) * k)
+    }
+  }
+  return parts
+}
+
+// Ambient occlusion towards the floor: down by the tiles the floor and the neighbouring legs
+// block most of the sky a surface can see, so a leg is far darker at its foot than at its top.
+// Without it every chair looks pasted onto the room rather than standing in it.
+const GROUND_AO = { depth: 0.36, reach: 0.62 }
+
+const smooth = (t: number) => {
+  const c = Math.min(1, Math.max(0, t))
+  return c * c * (3 - 2 * c)
+}
+
+/** Folds the room's baked light and the floor's occlusion into the merged furniture's colours. */
+function bakeRoomLight(g: BufferGeometry, room: RoomDef): BufferGeometry {
   const pos = g.getAttribute('position')
   const col = g.getAttribute('color')
+  const tint = new Color()
   for (let i = 0; i < pos.count; i++) {
-    const k = daylight(room, pos.getX(i), pos.getZ(i))
-    col.setXYZ(i, col.getX(i) * k, col.getY(i) * k, col.getZ(i) * k)
+    const ao = 1 - GROUND_AO.depth * (1 - smooth(pos.getY(i) / GROUND_AO.reach))
+    tint.copy(daylightColor(room, pos.getX(i), pos.getZ(i))).multiplyScalar(ao)
+    col.setXYZ(i, col.getX(i) * tint.r, col.getY(i) * tint.g, col.getZ(i) * tint.b)
   }
   return g
 }
@@ -349,14 +552,21 @@ export function buildClassroomFurniture(room: RoomDef, layout: ClassroomLayout):
   if (!c) throw new Error(`room "${room.id}" is not a classroom`)
   const parts: BufferGeometry[] = []
   const rand = seededRandom(hashSeed(`${room.id}:desk-items`))
+  const wear = seededRandom(hashSeed(`${room.id}:wear`))
   const seat = layout.spawnSeat.position
   for (const d of layout.desks) {
-    parts.push(...place(studentDesk(), d))
+    parts.push(...weathered(place(studentDesk(), d), wear))
     // The visitor's desk stays clear: the lesson buttons sit there.
     const own = Math.hypot(d.position[0] - seat[0], d.position[2] - seat[2]) < CLASSROOM.desk.width
     if (!own) parts.push(...place(deskItems(rand), d))
   }
-  for (const ch of layout.chairs) parts.push(...place(studentChair(), ch))
+  for (const ch of layout.chairs) parts.push(...weathered(place(studentChair(), ch), wear))
+  const demo = layout.demo
+  parts.push(
+    ...place([...nursingChair(), ...nursingPillow(), ...teachingDoll()], demo.chair),
+    ...place(expressingTable(), demo.table),
+    ...place(bassinet(), demo.bassinet),
+  )
   parts.push(...place(lecturerDesk(), layout.lecturerDesk))
   parts.push(...place(studentChair(), layout.lecturerChair))
 
@@ -599,7 +809,7 @@ export function buildClassroomFurniture(room: RoomDef, layout: ClassroomLayout):
   const merged = mergeGeometries(parts)
   parts.forEach((p) => p.dispose())
   if (!merged) throw new Error(`could not merge classroom furniture of room "${room.id}"`)
-  return bakeDaylight(merged, room)
+  return bakeRoomLight(merged, room)
 }
 
 /**
@@ -635,11 +845,18 @@ export function buildBlindFabric(room: RoomDef, layout: ClassroomLayout): BlindF
   const merged = mergeGeometries(parts)
   parts.forEach((p) => p.dispose())
   if (!merged) throw new Error(`could not merge blinds of room "${room.id}"`)
-  return { geometry: bakeDaylight(merged, room), rail }
+  return { geometry: bakeRoomLight(merged, room), rail }
 }
 
-/** Soft floor quad centred under a footprint, turned by `yaw`; the texture's dark core is ~60 %. */
-function shadowQuad(x: number, z: number, w: number, d: number, yaw: number): BufferGeometry {
+/** Soft floor quad of size w x d centred at (x, z) on height `y`, turned by `yaw`. */
+function shadowQuad(
+  x: number,
+  z: number,
+  w: number,
+  d: number,
+  yaw: number,
+  y: number,
+): BufferGeometry {
   const g = new BufferGeometry()
   const hw = w / 2
   const hd = d / 2
@@ -651,34 +868,51 @@ function shadowQuad(x: number, z: number, w: number, d: number, yaw: number): Bu
   g.setAttribute('uv', new Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2))
   // Counter-clockwise seen from above (+Y).
   g.setIndex([0, 1, 2, 0, 2, 3])
-  return turned(g, x, CONTACT_SHADOW_Y, z, yaw)
+  return turned(g, x, y, z, yaw)
 }
 
-// Just above the floor, under the additive sun patches (0.004).
+// Just above the floor, under the additive sun patches (0.004) and the core shadow.
 const CONTACT_SHADOW_Y = 0.002
+// The core sits a hair higher so it always blends over its own penumbra, never z-fights it.
+const CONTACT_CORE_Y = 0.0025
 // Quad size relative to the footprint, so the blurred core covers the area between the legs.
 const SPREAD = 1.45
+// The second, tighter quad: where the legs actually touch the tiles the two blends stack and the
+// shadow gains an umbra. One even grey over the whole footprint is what makes furniture float.
+const CORE = 0.62
+
+/** A footprint's penumbra and its darker core, both centred on (x, z) and turned by `yaw`. */
+function contactShadow(x: number, z: number, w: number, d: number, yaw: number): BufferGeometry[] {
+  return [
+    shadowQuad(x, z, w * SPREAD, d * SPREAD, yaw, CONTACT_SHADOW_Y),
+    shadowQuad(x, z, w * CORE, d * CORE, yaw, CONTACT_CORE_Y),
+  ]
+}
 
 /** Contact shadows under desks, chairs and radiators, merged into one transparent mesh. */
 export function buildContactShadows(room: RoomDef, layout: ClassroomLayout): BufferGeometry {
   const { desk } = CLASSROOM
   const parts: BufferGeometry[] = []
   for (const d of layout.desks) {
-    parts.push(
-      shadowQuad(d.position[0], d.position[2], desk.width * SPREAD, desk.depth * SPREAD, d.yaw),
-    )
+    parts.push(...contactShadow(d.position[0], d.position[2], desk.width, desk.depth, d.yaw))
   }
   for (const ch of [...layout.chairs, layout.lecturerChair]) {
-    parts.push(shadowQuad(ch.position[0], ch.position[2], 0.44 * SPREAD, 0.42 * SPREAD, ch.yaw))
+    parts.push(...contactShadow(ch.position[0], ch.position[2], 0.44, 0.42, ch.yaw))
   }
   const l = layout.lecturerDesk
-  parts.push(shadowQuad(l.position[0], l.position[2], 1.4 * SPREAD, 0.7 * SPREAD, l.yaw))
+  parts.push(...contactShadow(l.position[0], l.position[2], 1.4, 0.7, l.yaw))
+  const { chair, table, bassinet: crib } = layout.demo
+  parts.push(...contactShadow(chair.position[0], chair.position[2], 0.62, 0.58, chair.yaw))
+  parts.push(...contactShadow(table.position[0], table.position[2], 0.7, 0.45, table.yaw))
+  parts.push(...contactShadow(crib.position[0], crib.position[2], 0.86, 0.5, crib.yaw))
   const bin = layout.bin
-  parts.push(shadowQuad(bin.position[0], bin.position[2], 0.42, 0.42, bin.yaw))
+  parts.push(
+    ...contactShadow(bin.position[0], bin.position[2], 0.42 / SPREAD, 0.42 / SPREAD, bin.yaw),
+  )
   for (const r of layout.radiators) {
     const f = wallFrame(room, r.wall)
     const [x, , z] = wallPoint(f, r.u, 0, 0.12)
-    parts.push(shadowQuad(x, z, r.width * 1.2, 0.4, wallYaw(f)))
+    parts.push(...contactShadow(x, z, (r.width * 1.2) / SPREAD, 0.4 / SPREAD, wallYaw(f)))
   }
   const merged = mergeGeometries(parts)
   parts.forEach((p) => p.dispose())

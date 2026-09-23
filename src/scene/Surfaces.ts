@@ -4,7 +4,7 @@ import type { RoomDef } from '../schema/museum'
 import type { RoomLight } from '../design/light'
 import { ceilingGrid } from './ceilingGrid'
 import { wallFrame, wallPoint } from './wallFrame'
-import { daylight } from './bakedLight'
+import { daylightColor } from './bakedLight'
 
 /** Physical size of one repeat of the floor texture (Poly Haven interior_tiles: 1.9 m). */
 export const FLOOR_TILE_METRES = 1.9
@@ -21,7 +21,7 @@ function grid(room: RoomDef, step: number): Grid {
   const line = (a: number, len: number) => {
     const n = Math.max(2, Math.ceil(len / step))
     // Extra rows near the edges give the wall-seam darkening a soft but short falloff.
-    const edge = [0.15, 0.35, 0.7].filter((e) => e < len / 2)
+    const edge = [0.15, 0.35, 0.7, 1.1].filter((e) => e < len / 2)
     const out = new Set<number>()
     for (let i = 0; i <= n; i++) out.add(a + (len * i) / n)
     for (const e of edge) {
@@ -129,8 +129,11 @@ export function buildFloor(room: RoomDef, light: RoomLight, tileMetres: number):
     0,
     true,
     (px, pz) => {
-      const k = 1 - 0.28 * (1 - smooth(edgeDistance(room, px, pz) / 0.7))
-      return base.clone().multiplyScalar(k * daylight(room, px, pz) * floorWear(room, px, pz))
+      const k = 1 - 0.34 * (1 - smooth(edgeDistance(room, px, pz) / 0.9))
+      return base
+        .clone()
+        .multiplyScalar(k * floorWear(room, px, pz))
+        .multiply(daylightColor(room, px, pz))
     },
     tileMetres,
     { x: 0, z: 0 },
@@ -180,10 +183,13 @@ export function buildCeiling(room: RoomDef, light: RoomLight): BufferGeometry {
     room.height,
     false,
     (px, pz) => {
-      const seam = 1 - 0.18 * (1 - smooth(edgeDistance(room, px, pz) / 0.9))
+      const seam = 1 - 0.24 * (1 - smooth(edgeDistance(room, px, pz) / 1.1))
       const near = Math.min(...grid.panels.map((p) => Math.hypot(px - p.x, pz - p.z)))
-      const k = 0.9 * seam + 0.1 * (1 - smooth(near / 1.4))
-      return base.clone().multiplyScalar(k * daylight(room, px, pz))
+      const k = 0.88 * seam + 0.12 * (1 - smooth(near / 1.4))
+      return base
+        .clone()
+        .multiplyScalar(k)
+        .multiply(daylightColor(room, px, pz))
     },
     grid.tile,
     origin,
